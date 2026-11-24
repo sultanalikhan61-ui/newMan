@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Стратегия и Маршрут</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/core.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/core.js"></script>
+
+  <style>
+    .deadline-hero {
+      background: linear-gradient(135deg, rgba(217, 4, 41, 0.14), rgba(18, 18, 18, 0.96));
+      border: 1px solid rgba(217, 4, 41, 0.45);
+      border-left: 4px solid var(--red);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .countdown-boxes {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .cd-unit {
+      background: #090909;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      min-width: 68px;
+      text-align: center;
+    }
+    .cd-num {
+      font-family: var(--mono);
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1.1;
+    }
+    .cd-lbl {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 3px;
+      font-weight: 800;
+    }
+
+    /* Дорожная карта (Roadmap) */
+    .roadmap-track {
+      position: relative;
+      padding-left: 28px;
+      margin-top: 12px;
+    }
+    .roadmap-track::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--gold), var(--red), var(--border));
+    }
+
+    .stage-card {
+      position: relative;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      transition: var(--transition);
+    }
+    .stage-card:hover {
+      border-color: #444;
+      transform: translateX(3px);
+    }
+    .stage-card::before {
+      content: '';
+      position: absolute;
+      left: -25px;
+      top: 18px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 3px solid var(--gold);
+      z-index: 2;
+    }
+    .stage-card.completed {
+      border-color: rgba(46, 213, 115, 0.45);
+      background: linear-gradient(135deg, rgba(46, 213, 115, 0.06), var(--elevated));
+    }
+    .stage-card.completed::before {
+      background: var(--green);
+      border-color: var(--green);
+      box-shadow: 0 0 12px rgba(46, 213, 115, 0.6);
+    }
+    .stage-card.critical::before {
+      border-color: var(--red);
+      box-shadow: 0 0 12px rgba(217, 4, 41, 0.6);
+    }
+
+    .stage-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .stage-date-tag {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--gold);
+      border: 1px solid var(--border);
+    }
+
+    .sim-result-box {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+    .sim-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      .sim-metrics { grid-template-columns: 1fr; }
+    }
+    .sim-cell {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .sim-cell-val {
+      font-family: var(--mono);
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--gold);
+    }
+    .sim-cell-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* Стена стали (правила) */
+    .rule-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .rule-num {
+      font-family: var(--mono);
+      font-weight: 900;
+      color: var(--red);
+      margin-right: 8px;
+    }
+    .rule-text {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-nav">
+    <a href="index.html" class="back-btn">←</a>
+    <div class="page-title">Стратегия</div>
+    <div class="nav-badge" id="navStagesBadge">0 / 0 ЭТАПОВ</div>
+  </header>
+
+  <main class="content">
+
+    <!-- 1. ГЛАВНЫЙ ДЕДЛАЙН И ТАЙМЕР -->
+    <section class="deadline-hero">
+      <div>
+        <div style="font-size:0.75rem; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; color:var(--red);">
+          КОНТРОЛЬНАЯ ТОЧКА • <span id="deadlineDateDisplay">2026-12-16</span>
+        </div>
+        <h2 style="font-size:1.25rem; font-weight:900; margin-top:4px;">
+          Холодная голова. Чёткий расчёт. Ни шагу назад.
+        </h2>
+        <p style="font-size:0.86rem; color:#ccc; margin-top:4px;">
+          Каждый день до дедлайна измеряется закрытыми долгами, накопленным резервом и дисциплиной.
+        </p>
+      </div>
+
+      <div class="countdown-boxes">
+        <div class="cd-unit">
+          <div class="cd-num" id="cdDays">00</div>
+          <div class="cd-lbl">Дней</div>
+        </div>
+        <div class="cd-unit">
+          <div class="cd-num" id="cdHours">00</div>
+          <div class="cd-lbl">Часов</div>
+        </div>
+        <div class="cd-unit">
+          <div class="cd-num" id="cdMins">00</div>
+          <div class="cd-lbl">Мин</div>
+        </div>
+        <div class="cd-unit">
+          <div class="cd-num" id="cdSecs">00</div>
+          <div class="cd-lbl">Сек</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. KPI СТРАТЕГИИ -->
+    <section class="kpi-grid">
+      <div class="kpi-card gold">
+        <div class="kpi-title">Прогресс маршрута</div>
+        <div class="kpi-val gold" id="kpiRoutePct">0%</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-title">Накоплено в резерв</div>
+        <div class="kpi-val green" id="kpiReserveTotal">0 тг</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-title">Главная цель (Авто + ГБО)</div>
+        <div class="kpi-val" style="color:var(--blue);" id="kpiCarTarget">8 000 000 тг</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-title">Принципов на стене</div>
+        <div class="kpi-val red" id="kpiRulesCount">0</div>
+      </div>
+    </section>
+
+    <!-- 3. ДОРОЖНАЯ КАРТА + СИМУЛЯТОР ДОСТИЖЕНИЯ ЦЕЛЕЙ -->
+    <div class="grid-2">
+
+      <!-- Дорожная карта (Roadmap) -->
+      <section class="card">
+        <div class="section-title">
+          <span>🗺 Дорожная карта (Roadmap)</span>
+          <button class="btn btn-gold btn-sm" type="button" onclick="openStageModal()">+ Этап</button>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-fill" id="roadmapProgressFill"></div>
+        </div>
+
+        <div class="roadmap-track" id="roadmapContainer"></div>
+      </section>
+
+      <!-- Симулятор расчёта смен до цели -->
+      <section class="card">
+        <div class="section-title">
+          <span>🧮 Симулятор цели в сменах</span>
+          <span style="font-size:0.75rem; color:var(--gold);">МАТЕМАТИКА</span>
+        </div>
+
+        <div class="input-group">
+          <label for="simPresetSelect">Быстрый выбор цели</label>
+          <select id="simPresetSelect" class="input-field" onchange="applySimPreset()">
+            <option value="debt">Закрытие долгов (130 000 тг)</option>
+            <option value="reserve">Финансовая подушка (500 000 тг)</option>
+            <option value="car">Новая машина + ГБО (8 000 000 тг)</option>
+            <option value="custom">Своя сумма</option>
+          </select>
+        </div>
+
+        <div class="input-row">
+          <label for="simTargetCost">Стоимость цели (тг)</label>
+          <input type="number" step="5000" min="0" id="simTargetCost" class="input-field num" value="130000" oninput="recalcSimulator()">
+        </div>
+
+        <div class="input-row">
+          <label for="simAlreadySaved">Уже отложено (тг)</label>
+          <input type="number" step="1000" min="0" id="simAlreadySaved" class="input-field num" value="0" oninput="recalcSimulator()">
+        </div>
+
+        <div class="input-row">
+          <label for="simNetPerShift">Чистыми за смену после аренды и бензина (тг)</label>
+          <input type="number" step="500" min="1000" id="simNetPerShift" class="input-field num" value="12500" oninput="recalcSimulator()">
+        </div>
+
+        <div class="input-row">
+          <label for="simSavePct">Доля в копилку цели (% от чистых)</label>
+          <input type="number" step="5" min="5" max="100" id="simSavePct" class="input-field num" value="50" oninput="recalcSimulator()">
+        </div>
+
+        <div class="input-row">
+          <label for="simShiftLen">Длительность смены (часов)</label>
+          <input type="number" step="0.5" min="1" max="24" id="simShiftLen" class="input-field num" value="12" oninput="recalcSimulator()">
+        </div>
+
+        <div class="sim-result-box">
+          <div style="font-size:0.88rem; font-weight:800; color:#fff;" id="simSummaryLine">
+            Расчёт...
+          </div>
+          <div class="sim-metrics">
+            <div class="sim-cell">
+              <div class="sim-cell-val" id="simShiftsOut">0</div>
+              <div class="sim-cell-lbl">Смен нужно</div>
+            </div>
+            <div class="sim-cell">
+              <div class="sim-cell-val" id="simHoursOut">0 ч</div>
+              <div class="sim-cell-lbl">Часов за рулём</div>
+            </div>
+            <div class="sim-cell">
+              <div class="sim-cell-val" id="simEtaOut">—</div>
+              <div class="sim-cell-lbl">Ориентир (при 6 дн/нед)</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <button class="btn btn-green btn-sm" type="button" onclick="syncSavedToReserve()">Зафиксировать «Уже отложено» в резерв</button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 4. СТЕНА СТАЛИ (МОИ ПРАВИЛА И КОДЕКС) -->
+    <section class="card">
+      <div class="section-title">
+        <span>🛡 Стена Стали — Личный Кодекс</span>
+        <span style="font-size:0.75rem; color:var(--red);">БЕЗ КОМПРОМИССОВ</span>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:14px;">
+        <input type="text" id="newRuleInput" class="input-field" placeholder="Добавить железное правило (например: Не проверять соцсети и не жить прошлым)...">
+        <button class="btn btn-red btn-sm" type="button" onclick="addSteelRule()">Закрепить</button>
+      </div>
+
+      <div id="steelRulesContainer"></div>
+    </section>
+
+  </main>
+
+  <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ЭТАПА ROADMAP -->
+  <div class="modal" id="stageModal">
+    <div class="modal-box">
+      <h2 style="margin-bottom:16px; color:var(--gold);" id="stageModalTitle">Новый этап маршрута</h2>
+
+      <div class="input-group">
+        <label for="stageTitleInput">Название этапа</label>
+        <input type="text" id="stageTitleInput" class="input-field" placeholder="Например: Закрыть 130 000 тг долгов">
+      </div>
+
+      <div class="grid-2" style="gap:10px;">
+        <div class="input-group">
+          <label for="stageDateInput">Ориентир / Дата</label>
+          <input type="text" id="stageDateInput" class="input-field" placeholder="Декабрь 2026">
+        </div>
+        <div class="input-group">
+          <label for="stageAmountInput">Финансовый ориентир (тг)</label>
+          <input type="number" step="5000" min="0" id="stageAmountInput" class="input-field" value="0">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="stageDescInput">Критерий выполнения</label>
+        <textarea id="stageDescInput" rows="3" class="input-field" placeholder="Что именно должно быть сделано без отговорок..."></textarea>
+      </div>
+
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; font-weight:700; margin-bottom:14px; cursor:pointer;">
+        <input type="checkbox" id="stageCriticalCheck" style="width:18px; height:18px; accent-color:var(--red);">
+        <span>Критически важный рубеж</span>
+      </label>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-dark" type="button" onclick="closeStageModal()">Отмена</button>
+        <button class="btn btn-gold" type="button" onclick="saveStageItem()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STRATEGY_PATH = "man_strategy";
+
+    const DEFAULT_STRATEGY = {
+      reserveSaved: 0,
+      stages: [
+        {
+          id: "st_1",
+          title: "Закрыть приоритетные долги (130 000 тг)",
+          dateLabel: "Ближайший рубеж",
+          targetAmount: 130000,
+          desc: "Полный расчёт по срочным долгам без новых займов и просрочек.",
+          critical: true,
+          completed: false
+        },
+        {
+          id: "st_2",
+          title: "Дедлайн 16 декабря — точка сборки",
+          dateLabel: "16 Декабря 2026",
+          targetAmount: 0,
+          desc: "Холодный ум, порядок в финансах, соблюдение режима сна и дисциплины.",
+          critical: true,
+          completed: false
+        },
+        {
+          id: "st_3",
+          title: "Финансовая подушка безопасности",
+          dateLabel: "I квартал 2027",
+          targetAmount: 500000,
+          desc: "Неприкосновенный резерв на случай ремонта, простоев и форс-мажоров.",
+          critical: false,
+          completed: false
+        },
+        {
+          id: "st_4",
+          title: "Покупка новой машины + установка ГБО",
+          dateLabel: "2027",
+          targetAmount: 8000000,
+          desc: "Переход на свежий автомобиль без постоянных поломок и выход на новый уровень дохода.",
+          critical: true,
+          completed: false
+        },
+        {
+          id: "st_5",
+          title: "Фундамент семьи и собственный капитал",
+          dateLabel: "Стратегия 2031",
+          targetAmount: 25000000,
+          desc: "Собственное жильё и устойчивый источник дохода помимо баранки.",
+          critical: false,
+          completed: false
+        }
+      ],
+      rules: [
+        { id: "rl_1", text: "Я не бегаю за тем, кто выбирает сомнения, и не проверяю чужие соцсети." },
+        { id: "rl_2", text: "Сначала долги и резерв, потом импульсивные траты." },
+        { id: "rl_3", text: "Я уважаю свой сон (минимум 6–7 часов) — разбитый водитель теряет деньги и здоровье." },
+        { id: "rl_4", text: "Никакой жалости к себе: цифры и выполненные смены важнее настроения." }
+      ]
+    };
+
+    let strategyState = JSON.parse(JSON.stringify(DEFAULT_STRATEGY));
+    let activeDeadlineIso = "2026-12-16T00:00:00+05:00";
+    let editingStageId = null;
+
+    function normalizeStrategy(raw) {
+      if (!raw || typeof raw !== "object") {
+        return JSON.parse(JSON.stringify(DEFAULT_STRATEGY));
+      }
+      const stages = Array.isArray(raw.stages)
+        ? raw.stages
+        : raw.stages && typeof raw.stages === "object"
+          ? Object.entries(raw.stages).map(([id, val]) => ({ id, ...val }))
+          : JSON.parse(JSON.stringify(DEFAULT_STRATEGY.stages));
+
+      const rules = Array.isArray(raw.rules)
+        ? raw.rules
+        : raw.rules && typeof raw.rules === "object"
+          ? Object.entries(raw.rules).map(([id, val]) => ({ id, ...val }))
+          : JSON.parse(JSON.stringify(DEFAULT_STRATEGY.rules));
+
+      return {
+        reserveSaved: Number(raw.reserveSaved) || 0,
+        stages,
+        rules
+      };
+    }
+
+    function persistStrategy(toastMsg = null) {
+      CoreDB.save(STRATEGY_PATH, strategyState).then(() => {
+        if (toastMsg) coreToast(toastMsg, "gold");
+      });
+    }
+
+    function updateLiveCountdown() {
+      const rem = getDeadlineStats(activeDeadlineIso);
+      document.getElementById("cdDays").textContent = String(rem.days).padStart(2, "0");
+      document.getElementById("cdHours").textContent = String(rem.hours).padStart(2, "0");
+      document.getElementById("cdMins").textContent = String(rem.minutes).padStart(2, "0");
+      document.getElementById("cdSecs").textContent = String(rem.seconds).padStart(2, "0");
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderKPIs() {
+      const totalStages = strategyState.stages.length;
+      const doneStages = strategyState.stages.filter((s) => s.completed).length;
+      const pct = totalStages ? Math.round((doneStages / totalStages) * 100) : 0;
+
+      document.getElementById("navStagesBadge").textContent = `${doneStages} / ${totalStages} ЭТАПОВ`;
+      document.getElementById("kpiRoutePct").textContent = `${pct}%`;
+      document.getElementById("roadmapProgressFill").style.width = `${pct}%`;
+      document.getElementById("kpiReserveTotal").textContent = formatKZT(strategyState.reserveSaved || 0);
+      document.getElementById("kpiRulesCount").textContent = strategyState.rules.length;
+    }
+
+    function renderRoadmap() {
+      const container = document.getElementById("roadmapContainer");
+      if (!strategyState.stages.length) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.88rem;">Этапов пока нет. Нажми «+ Этап».</div>`;
+        return;
+      }
+
+      container.innerHTML = strategyState.stages.map((st) => `
+        <article class="stage-card ${st.completed ? "completed" : ""} ${st.critical ? "critical" : ""}">
+          <div class="stage-head">
+            <div>
+              <span class="stage-date-tag">${escapeHtml(st.dateLabel || "Этап")}</span>
+              ${st.targetAmount > 0 ? `<span class="stage-date-tag" style="margin-left:6px; color:var(--green);">${formatKZT(st.targetAmount)}</span>` : ""}
+              <h3 style="font-size:1.02rem; font-weight:800; margin-top:8px; ${st.completed ? "text-decoration:line-through; color:var(--text-muted);" : ""}">
+                ${escapeHtml(st.title)}
+              </h3>
+            </div>
+            <div style="font-family:var(--mono); font-size:0.8rem; font-weight:900; color:${st.completed ? "var(--green)" : "var(--gold)"};">
+              ${st.completed ? "✓ ПРОЙДЕН" : "В РАБОТЕ"}
+            </div>
+          </div>
+
+          ${st.desc ? `<p style="font-size:0.86rem; color:#ccc; margin-bottom:10px;">${escapeHtml(st.desc)}</p>` : ""}
+
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button class="btn ${st.completed ? "btn-dark" : "btn-green"} btn-sm" type="button" onclick="toggleStageDone('${st.id}')">
+              ${st.completed ? "Вернуть" : "Выполнено"}
+            </button>
+            <button class="btn btn-dark btn-sm" type="button" onclick="openStageModal('${st.id}')">Изменить</button>
+            <button class="btn btn-red btn-sm" type="button" onclick="deleteStage('${st.id}')">Удалить</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function toggleStageDone(id) {
+      const st = strategyState.stages.find((s) => s.id === id);
+      if (!st) return;
+      st.completed = !st.completed;
+
+      if (st.completed) {
+        triggerVictoryFlash();
+        logVictory(
+          `Этап стратегии пройден: ${st.title}`,
+          st.desc || `Рубеж (${st.dateLabel}) закрыт.`,
+          "personal",
+          true
+        );
+        persistStrategy("Этап отмечен как пройденный!");
+      } else {
+        persistStrategy("Этап возвращён в работу.");
+      }
+      renderAll();
+    }
+
+    function deleteStage(id) {
+      const st = strategyState.stages.find((s) => s.id === id);
+      if (!st) return;
+      if (!confirm(`Удалить этап «${st.title}»?`)) return;
+      strategyState.stages = strategyState.stages.filter((s) => s.id !== id);
+      persistStrategy("Этап удалён.");
+      renderAll();
+    }
+
+    function openStageModal(id = null) {
+      editingStageId = id || null;
+      const modal = document.getElementById("stageModal");
+      const titleEl = document.getElementById("stageModalTitle");
+
+      if (editingStageId) {
+        const st = strategyState.stages.find((s) => s.id === editingStageId);
+        if (!st) return;
+        titleEl.textContent = "Редактировать этап";
+        document.getElementById("stageTitleInput").value = st.title || "";
+        document.getElementById("stageDateInput").value = st.dateLabel || "";
+        document.getElementById("stageAmountInput").value = st.targetAmount ?? 0;
+        document.getElementById("stageDescInput").value = st.desc || "";
+        document.getElementById("stageCriticalCheck").checked = Boolean(st.critical);
+      } else {
+        titleEl.textContent = "Новый этап маршрута";
+        document.getElementById("stageTitleInput").value = "";
+        document.getElementById("stageDateInput").value = "2027";
+        document.getElementById("stageAmountInput").value = 0;
+        document.getElementById("stageDescInput").value = "";
+        document.getElementById("stageCriticalCheck").checked = false;
+      }
+
+      modal.classList.add("active");
+    }
+
+    function closeStageModal() {
+      editingStageId = null;
+      document.getElementById("stageModal").classList.remove("active");
+    }
+
+    function saveStageItem() {
+      const title = document.getElementById("stageTitleInput").value.trim();
+      if (!title) {
+        coreToast("Укажи название этапа.", "danger");
+        return;
+      }
+
+      const payload = {
+        title,
+        dateLabel: document.getElementById("stageDateInput").value.trim() || "Этап",
+        targetAmount: Math.max(0, Number(document.getElementById("stageAmountInput").value) || 0),
+        desc: document.getElementById("stageDescInput").value.trim(),
+        critical: document.getElementById("stageCriticalCheck").checked
+      };
+
+      if (editingStageId) {
+        const idx = strategyState.stages.findIndex((s) => s.id === editingStageId);
+        if (idx !== -1) {
+          strategyState.stages[idx] = { ...strategyState.stages[idx], ...payload };
+        }
+      } else {
+        strategyState.stages.push({
+          id: "st_" + Date.now(),
+          ...payload,
+          completed: false
+        });
+      }
+
+      closeStageModal();
+      persistStrategy("Этап маршрута сохранён.");
+      renderAll();
+    }
+
+    function applySimPreset() {
+      const preset = document.getElementById("simPresetSelect").value;
+      const savedCfg = CoreDB.getLocal("man_settings", {}) || {};
+      const costInput = document.getElementById("simTargetCost");
+
+      if (preset === "debt") {
+        costInput.value = savedCfg.debtTarget || 130000;
+      } else if (preset === "reserve") {
+        costInput.value = 500000;
+      } else if (preset === "car") {
+        costInput.value = savedCfg.carGoal || 8000000;
+      }
+      recalcSimulator();
+    }
+
+    function recalcSimulator() {
+      const targetCost = Math.max(0, Number(document.getElementById("simTargetCost").value) || 0);
+      const alreadySaved = Math.max(0, Number(document.getElementById("simAlreadySaved").value) || 0);
+      const netShift = Math.max(0, Number(document.getElementById("simNetPerShift").value) || 0);
+      const savePct = Math.min(100, Math.max(1, Number(document.getElementById("simSavePct").value) || 50));
+      const shiftLen = Math.max(1, Number(document.getElementById("simShiftLen").value) || 12);
+
+      const remaining = Math.max(0, targetCost - alreadySaved);
+      const contributionPerShift = netShift * (savePct / 100);
+
+      if (remaining === 0) {
+        document.getElementById("simSummaryLine").textContent = "Цель уже полностью обеспечена накоплениями.";
+        document.getElementById("simShiftsOut").textContent = "0";
+        document.getElementById("simHoursOut").textContent = "0 ч";
+        document.getElementById("simEtaOut").textContent = "ГОТОВО";
+        return;
+      }
+
+      if (contributionPerShift <= 0) {
+        document.getElementById("simSummaryLine").textContent = "Укажи положительный чистый доход за смену.";
+        document.getElementById("simShiftsOut").textContent = "∞";
+        document.getElementById("simHoursOut").textContent = "∞";
+        document.getElementById("simEtaOut").textContent = "—";
+        return;
+      }
+
+      const shiftsNeeded = Math.ceil(remaining / contributionPerShift);
+      const hoursNeeded = Math.round(shiftsNeeded * shiftLen);
+      const calendarDays = Math.ceil((shiftsNeeded / 6) * 7);
+      const etaDate = new Date(Date.now() + calendarDays * 24 * 60 * 60 * 1000);
+      const etaStr = etaDate.toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" });
+
+      document.getElementById("simSummaryLine").textContent =
+        `Осталось собрать ${formatKZT(remaining)} (по ${formatKZT(contributionPerShift)} со смены):`;
+      document.getElementById("simShiftsOut").textContent = shiftsNeeded.toLocaleString("ru-RU");
+      document.getElementById("simHoursOut").textContent = `${hoursNeeded.toLocaleString("ru-RU")} ч`;
+      document.getElementById("simEtaOut").textContent = etaStr;
+    }
+
+    function syncSavedToReserve() {
+      const val = Math.max(0, Number(document.getElementById("simAlreadySaved").value) || 0);
+      strategyState.reserveSaved = val;
+      persistStrategy(`Резерв обновлён: ${formatKZT(val)}`);
+      renderKPIs();
+    }
+
+    function renderRules() {
+      const container = document.getElementById("steelRulesContainer");
+      if (!strategyState.rules.length) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.88rem;">Список правил пуст. Добавь свой первый принцип.</div>`;
+        return;
+      }
+
+      container.innerHTML = strategyState.rules.map((r, index) => `
+        <div class="rule-row">
+          <div class="rule-text">
+            <span class="rule-num">#${index + 1}</span>
+            ${escapeHtml(r.text)}
+          </div>
+          <div style="display:flex; gap:6px;">
+            ${index > 0 ? `<button class="btn btn-dark btn-sm" type="button" onclick="moveRuleUp(${index})" title="Поднять выше">↑</button>` : ""}
+            <button class="btn btn-red btn-sm" type="button" onclick="deleteRule('${r.id}')" title="Удалить">✕</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function addSteelRule() {
+      const input = document.getElementById("newRuleInput");
+      const text = input.value.trim();
+      if (!text) return;
+      strategyState.rules.push({ id: "rl_" + Date.now(), text });
+      input.value = "";
+      persistStrategy("Правило закреплено на Стене Стали.");
+      renderAll();
+    }
+
+    function moveRuleUp(index) {
+      if (index <= 0 || index >= strategyState.rules.length) return;
+      const temp = strategyState.rules[index - 1];
+      strategyState.rules[index - 1] = strategyState.rules[index];
+      strategyState.rules[index] = temp;
+      persistStrategy();
+      renderRules();
+    }
+
+    function deleteRule(id) {
+      strategyState.rules = strategyState.rules.filter((r) => r.id !== id);
+      persistStrategy("Правило удалено.");
+      renderAll();
+    }
+
+    function renderAll() {
+      renderKPIs();
+      renderRoadmap();
+      renderRules();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Подтягиваем дедлайн и базовые цифры смен из настроек (settings.html)
+      CoreDB.watch("man_settings", (cfg) => {
+        if (cfg && typeof cfg === "object") {
+          if (cfg.deadline) {
+            activeDeadlineIso = `${cfg.deadline}T00:00:00+05:00`;
+            document.getElementById("deadlineDateDisplay").textContent = cfg.deadline;
+          }
+          if (cfg.carGoal) {
+            document.getElementById("kpiCarTarget").textContent = formatKZT(cfg.carGoal);
+          }
+          const net = Math.max(1000, (Number(cfg.avgShiftIncome) || 25000) - (Number(cfg.rentPerDay) || 8000) - (Number(cfg.fuelPerDay) || 4500));
+          document.getElementById("simNetPerShift").value = net;
+          if (cfg.shiftHours) {
+            document.getElementById("simShiftLen").value = cfg.shiftHours;
+          }
+          applySimPreset();
+        }
+      });
+
+      updateLiveCountdown();
+      setInterval(updateLiveCountdown, 1000);
+      recalcSimulator();
+      renderAll();
+
+      CoreDB.watch(STRATEGY_PATH, (remote) => {
+        if (remote && typeof remote === "object") {
+          strategyState = normalizeStrategy(remote);
+          document.getElementById("simAlreadySaved").value = strategyState.reserveSaved || 0;
+          recalcSimulator();
+          renderAll();
+        }
+      }, DEFAULT_STRATEGY);
+    });
+  </script>
+</body>
+</html>
