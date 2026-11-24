@@ -2,832 +2,488 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>THE CORE | Command Center v3.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Command Center</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
-    /* =========================================
-       1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И БАЗА
-       ========================================= */
+    /* CSS БАЗА (Темная тема) */
     :root {
-      --bg-base: #050505;
-      --bg-surface: #121212;
-      --bg-surface-hover: #1a1a1a;
-      --bg-elevated: #222222;
-      --border-color: #333333;
-      
-      --text-primary: #ffffff;
-      --text-secondary: #a0a0a0;
-      --text-muted: #666666;
-      
-      --accent-red: #d90429;
-      --accent-red-hover: #ef233c;
-      --accent-gold: #d4af37;
-      --accent-green: #2ed573;
-      --accent-blue: #1e90ff;
-      
-      --shadow-soft: 0 4px 20px rgba(0,0,0,0.6);
-      --shadow-hard: 0 10px 40px rgba(0,0,0,0.9);
-      --shadow-glow-red: 0 0 15px rgba(217, 4, 41, 0.5);
-      --shadow-glow-gold: 0 0 15px rgba(212, 175, 55, 0.4);
-      
-      --font-main: 'Inter', sans-serif;
-      --font-display: 'Playfair Display', serif;
-      
-      --transition-fast: 0.2s ease;
-      --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      --bg: #050505; --surface: #121212; --elevated: #1e1e1e; --border: #2a2a2a;
+      --text: #f5f5f5; --text-muted: #888; 
+      --red: #d90429; --gold: #d4af37; --green: #2ed573; --blue: #1e90ff;
+      --font: 'Inter', sans-serif; --display: 'Playfair Display', serif;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
+    
+    /* Layout */
+    .app { display: flex; flex-direction: column; height: 100vh; max-width: 1400px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5,5,5,0.9); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+    .brand { font-family: var(--display); font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; }
+    .brand span { color: var(--red); }
+    .nav-stats { display: flex; gap: 15px; font-size: 0.85rem; font-weight: 700; }
+    .nav-stats span { color: var(--gold); }
+    
+    .main { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
+    .tab { display: none; animation: fade 0.4s ease; } .tab.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    body {
-      background-color: var(--bg-base);
-      color: var(--text-primary);
-      font-family: var(--font-main);
-      line-height: 1.5;
-      min-height: 100vh;
-      overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 40%);
-    }
-
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg-base); }
-    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
-
-    /* =========================================
-       2. СТРУКТУРА (LAYOUT)
-       ========================================= */
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .top-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 20px;
-      background: rgba(5, 5, 5, 0.9);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border-color);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .brand {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: var(--text-primary);
-      text-transform: uppercase;
-    }
-    .brand span { color: var(--accent-red); }
-
-    .global-stats { display: flex; gap: 20px; font-size: 0.85rem; font-weight: 600; }
-    .stat-item { display: flex; align-items: center; gap: 5px; }
-    .stat-item span { color: var(--accent-gold); }
-
-    .main-content { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
-
-    .tab-section { display: none; animation: fadeIn var(--transition-smooth); }
-    .tab-section.active { display: block; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; width: 100%;
-      background: rgba(18, 18, 18, 0.98); backdrop-filter: blur(15px);
-      border-top: 1px solid var(--border-color); display: flex;
-      justify-content: space-around; padding: 10px 0 15px 0; z-index: 100;
-    }
-
-    .nav-btn {
-      background: none; border: none; color: var(--text-muted);
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: var(--transition-fast); width: 20%;
-    }
-    .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
-    .nav-btn.active { color: var(--accent-red); }
-    .nav-btn:hover { color: var(--text-primary); }
-
-    /* =========================================
-       3. UI КОМПОНЕНТЫ
-       ========================================= */
-    .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
-
-    .card {
-      background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px;
-      padding: 25px; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; transition: var(--transition-smooth);
-    }
-    .card:hover { border-color: #555; box-shadow: var(--shadow-hard); }
-    .card::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
-      background: var(--accent-red); opacity: 0; transition: var(--transition-fast);
-    }
-    .card:hover::before { opacity: 1; }
-    .card.gold-accent::before { background: var(--accent-gold); }
-    .card.green-accent::before { background: var(--accent-green); }
-    .card.blue-accent::before { background: var(--accent-blue); }
-
-    .card-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color);
-    }
-    .card-title { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
-
+    /* Bottom Nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(18,18,18,0.98); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 15px; z-index: 100; backdrop-filter: blur(15px); }
+    .nav-btn { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: 0.2s; width: 20%; text-transform: uppercase;}
+    .nav-btn svg { width: 22px; height: 22px; fill: currentColor; } .nav-btn.active { color: var(--red); }
+    
+    /* UI Элементы */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+    .card-title { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; gap: 10px; align-items: center;}
+    
     .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .input-group label { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
-    .input-field {
-      background: var(--bg-elevated); border: 1px solid var(--border-color); color: var(--text-primary);
-      padding: 10px 15px; border-radius: 8px; width: 140px; text-align: right;
-      font-family: var(--font-main); font-weight: 700; font-size: 1rem; transition: var(--transition-fast);
-    }
-    .input-field:focus { outline: none; border-color: var(--accent-red); box-shadow: var(--shadow-glow-red); }
+    .input-group label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+    .input { background: var(--elevated); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 8px; width: 140px; text-align: right; font-family: var(--font); font-weight: 700; }
+    .input:focus { outline: none; border-color: var(--red); }
+    .input.wide { width: 100%; text-align: left; }
     
-    /* Спец инпут для широких полей */
-    .input-field.wide { width: 100%; text-align: left; }
+    .btn { background: var(--elevated); color: var(--text); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; width: 100%; }
+    .btn:hover { background: var(--border); }
+    .btn-red { background: var(--red); border-color: var(--red); color: #fff; }
+    .btn-gold { background: var(--gold); border-color: var(--gold); color: #000; }
 
-    .btn {
-      background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border-color);
-      padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;
-      transition: var(--transition-fast); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;
-    }
-    .btn:hover { background: var(--border-color); }
-    .btn-primary { background: var(--accent-red); border-color: var(--accent-red); }
-    .btn-primary:hover { background: var(--accent-red-hover); box-shadow: var(--shadow-glow-red); }
-    .btn-gold { background: var(--accent-gold); border-color: var(--accent-gold); color: #000; }
-    .btn-gold:hover { background: #e6c14e; box-shadow: var(--shadow-glow-gold); }
+    .progress { width: 100%; height: 12px; background: var(--elevated); border-radius: 6px; overflow: hidden; margin: 15px 0 5px; }
+    .progress-bar { height: 100%; background: var(--red); width: 0%; transition: 0.5s; }
+    .progress-bar.gold { background: var(--gold); }
 
-    .progress-track { width: 100%; height: 12px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden; margin: 15px 0 5px 0; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-red), #ff4d4d); width: 0%; transition: width var(--transition-smooth); }
-    .progress-fill.gold { background: linear-gradient(90deg, var(--accent-gold), #ffe066); }
+    .box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border); }
+    .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600; }
+    .val { color: var(--gold); font-weight: 800; }
+    .val.green { color: var(--green); } .val.red { color: var(--red); }
 
-    .result-box { background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
-    .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-    .result-row:last-child { margin-bottom: 0; }
-    .result-val { font-weight: 800; color: var(--accent-gold); }
-    .result-val.red { color: var(--accent-red); }
-    .result-val.green { color: var(--accent-green); }
-
-    /* =========================================
-       4. МОДУЛИ
-       ========================================= */
-    .countdown-hero { text-align: center; padding: 30px 10px; background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(18,18,18,0) 100%); border-radius: 20px; margin-bottom: 20px; }
-    .countdown-title { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px;}
-    .countdown-timer { font-size: 2.5rem; font-weight: 900; color: var(--accent-red); margin: 10px 0; font-variant-numeric: tabular-nums; }
+    /* Дневник */
+    .journal-list { display: flex; flex-direction: column; gap: 15px; }
+    .j-card { background: var(--elevated); border: 1px solid var(--border); border-radius: 12px; padding: 15px; cursor: pointer; transition: 0.2s; display: flex; gap: 15px; }
+    .j-card:hover { border-color: var(--gold); transform: translateX(5px); }
+    .j-sticker { font-size: 2rem; }
+    .j-content { flex: 1; }
+    .j-date { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; text-transform: uppercase;}
+    .j-summary { font-size: 1rem; color: var(--text); font-weight: 600; }
+    .j-text { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); color: var(--text-muted); font-size: 0.9rem; white-space: pre-wrap; }
+    .j-card.open .j-text { display: block; }
     
-    .quote-box {
-      text-align: center; font-style: italic; color: var(--text-secondary); min-height: 50px;
-      padding: 15px; font-size: 1rem; border-left: 3px solid var(--accent-gold); background: rgba(212, 175, 55, 0.05); border-radius: 0 8px 8px 0; margin-top: 20px;
-    }
-
-    /* Долги */
-    .debt-item {
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--bg-elevated); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--accent-red);
-    }
-    .debt-info h4 { font-size: 0.95rem; margin-bottom: 2px; }
-    .debt-info span { font-size: 0.8rem; color: var(--text-muted); }
-    .debt-amount { font-weight: 800; color: var(--accent-red); }
-    .debt-btn-del { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
-    .debt-btn-del:hover { color: var(--accent-green); }
-
-    /* График */
-    .chart-container { position: relative; height: 300px; width: 100%; margin-top: 20px; }
-
-    /* Настройки */
-    .settings-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed var(--border-color); }
-    .settings-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .settings-title { font-size: 1rem; color: var(--accent-gold); margin-bottom: 15px; font-weight: 800; }
-
-    /* =========================================
-       5. АДАПТИВНОСТЬ
-       ========================================= */
+    /* Модалка */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 25px; }
+    
+    .stickers { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+    .st-btn { font-size: 2rem; background: var(--elevated); border: 2px solid transparent; border-radius: 12px; width: 60px; height: 60px; cursor: pointer; }
+    .st-btn.sel { border-color: var(--gold); background: rgba(212,175,55,0.1); transform: scale(1.1); }
+    .textarea { width: 100%; height: 150px; background: var(--elevated); border: 1px solid var(--border); color: var(--text); padding: 15px; border-radius: 8px; font-family: var(--font); resize: none; margin-bottom: 20px; }
+    
+    /* Адаптив */
     @media (min-width: 768px) {
-      .bottom-nav { width: 90px; height: 100vh; flex-direction: column; justify-content: flex-start; padding-top: 100px; right: 0; left: auto; border-top: none; border-left: 1px solid var(--border-color); }
-      .nav-btn { width: 100%; margin-bottom: 30px; }
-      .nav-btn span { display: block; margin-top: 5px; }
-      .main-content { padding-right: 130px; }
-      .app-container { max-width: 1400px; }
+      .bottom-nav { width: 90px; height: 100vh; flex-direction: column; justify-content: flex-start; padding-top: 100px; right: 0; left: auto; border-top: none; border-left: 1px solid var(--border); }
+      .nav-btn { width: 100%; margin-bottom: 30px; } .nav-btn span { display: block; margin-top: 5px; }
+      .main { padding-right: 120px; }
     }
   </style>
 </head>
 <body>
 
-<div class="app-container">
+<div class="app">
   
   <header class="top-nav">
     <div class="brand">THE <span>CORE</span></div>
-    <div class="global-stats">
-      <div class="stat-item">Долг: <span id="navDebt">0</span> тг</div>
-      <div class="stat-item">Дисциплина: <span id="navStreak">0</span> дней</div>
+    <div class="nav-stats">
+      <div>Долг: <span id="navDebt">0</span></div>
+      <div>Стрик: <span id="navStreak">0</span></div>
     </div>
   </header>
 
-  <main class="main-content">
-
-    <!-- ВКЛАДКА 1: ШТАБ (ДАШБОРД) -->
-    <section id="tab-dashboard" class="tab-section active">
-      <div class="countdown-hero">
-        <div class="countdown-title">До дедлайна (16 Декабря) осталось:</div>
-        <div class="countdown-timer" id="countdownTimer">Загрузка...</div>
-        <button class="btn btn-primary" onclick="generateMotivation()">ВЫДАТЬ ПИЗДЮЛЕЙ</button>
-        <div class="quote-box" id="quoteBox">"Твоя боль — это топливо для твоих амбиций."</div>
-      </div>
-
-      <div class="grid-container">
-        <!-- Ввод баланса -->
-        <div class="card blue-accent">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">📉📈</span> Баланс за день</div>
-          </div>
-          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">Введи общую сумму на счетах (Каспи + Яндекс) утром и вечером.</p>
-          
-          <div class="input-group">
-            <label>Утро (Общий баланс):</label>
-            <input type="number" id="morningBalance" class="input-field" placeholder="0">
-          </div>
-          <div class="input-group">
-            <label>Вечер (Общий баланс):</label>
-            <input type="number" id="eveningBalance" class="input-field" placeholder="0">
-          </div>
-          <button class="btn btn-primary" onclick="saveDailyLog()" style="width:100%;">Зафиксировать день</button>
-
-          <div class="result-box">
-            <div class="result-row"><span>Чистый доход за сегодня:</span> <span class="result-val green" id="dailyNet">0</span></div>
+  <main class="main">
+    
+    <!-- ВКЛАДКА: ФИНАНСЫ -->
+    <section id="tab-fin" class="tab active">
+      <div class="grid">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📉 Ввод за день</div></div>
+          <div class="input-group"><label>Баланс утром:</label><input type="number" id="finMorning" class="input" placeholder="0"></div>
+          <div class="input-group"><label>Баланс вечером:</label><input type="number" id="finEvening" class="input" placeholder="0"></div>
+          <button class="btn btn-primary" onclick="addDailyIncome()">Зафиксировать</button>
+          <div class="box" id="finDayResult" style="display:none;">
+            <div class="row"><span>Чистыми:</span><span class="val green" id="finNet">0</span></div>
           </div>
         </div>
 
-        <!-- Быстрый статус долгов -->
-        <div class="card gold-accent">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">🎯</span> Текущая цель</div>
-          </div>
-          <div class="result-box">
-             <div class="result-row"><span>Тело кредита:</span> <span class="result-val red" id="dashBankDebt">0</span></div>
-             <div class="result-row"><span>Платеж в месяц:</span> <span class="result-val" id="dashMonthlyPay">0</span></div>
-             <div class="result-row"><span>Долги друзьям:</span> <span class="result-val red" id="dashFriendDebt">0</span></div>
-          </div>
-          <p style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin-top:10px;">Данные редактируются во вкладке "Настройки"</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ВКЛАДКА 2: АНАЛИТИКА -->
-    <section id="tab-analytics" class="tab-section">
-      <div class="grid-container">
-        <div class="card" style="grid-column: 1 / -1;">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">📊</span> График дохода (Чистыми)</div>
-          </div>
-          <div class="chart-container">
-            <canvas id="incomeChart"></canvas>
-          </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏦 Кредит</div></div>
+          <div class="input-group"><label>Тело кредита:</label><input type="number" id="bankDebt" class="input" onchange="saveBankDebt()"></div>
+          <div class="input-group"><label>Платеж:</label><input type="number" id="bankPay" class="input" onchange="saveBankDebt()"></div>
+          <div class="progress"><div class="progress-bar gold" id="bankBar"></div></div>
         </div>
       </div>
       
-      <div class="grid-container">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Средний доход в день</div>
-          </div>
-          <h2 style="font-size: 2rem; color: var(--accent-green); text-align: center;" id="avgDailyIncome">0 тг</h2>
-          <p style="font-size:0.8rem; color:var(--text-secondary); text-align: center;">На основе последних записей</p>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🤝 Долги друзьям</div></div>
+        <div class="input-group">
+          <input type="text" id="frName" class="input wide" placeholder="Имя">
+          <input type="number" id="frSum" class="input" placeholder="Сумма">
+          <button class="btn btn-red" onclick="addFriendDebt()" style="width: 50px; padding: 10px;">+</button>
         </div>
-        
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Средний доход в месяц (прогноз)</div>
-          </div>
-          <h2 style="font-size: 2rem; color: var(--accent-gold); text-align: center;" id="projMonthlyIncome">0 тг</h2>
-          <p style="font-size:0.8rem; color:var(--text-secondary); text-align: center;">При текущем темпе</p>
-        </div>
+        <div id="friendDebtsList"></div>
       </div>
     </section>
 
-    <!-- ВКЛАДКА 3: ДОЛГИ -->
-    <section id="tab-debts" class="tab-section">
-      <div class="grid-container">
-        <!-- Долги друзьям -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">🤝</span> Долги друзьям</div>
-            <div style="font-size:0.9rem; font-weight:800; color:var(--accent-red);">Итого: <span id="totalFriendDebt">0</span> тг</div>
-          </div>
-          
-          <div class="input-group">
-            <input type="text" id="newFriendName" class="input-field wide" style="width: 45%;" placeholder="Имя">
-            <input type="number" id="newFriendSum" class="input-field" style="width: 35%;" placeholder="Сумма">
-            <button class="btn btn-primary" onclick="addFriendDebt()" style="padding:10px 15px;">+</button>
-          </div>
-
-          <div class="debt-list" id="friendDebtList">
-            <!-- Рендерится в JS -->
-          </div>
-        </div>
-
-        <!-- Банковский кредит -->
-        <div class="card gold-accent">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">🏦</span> Банковский кредит</div>
-          </div>
-          <div class="input-group">
-            <label>Текущий остаток:</label>
-            <input type="number" id="bankDebtAmount" class="input-field" placeholder="1500000" oninput="saveSettings()">
-          </div>
-          <div class="input-group">
-            <label>Ежемесячный платеж:</label>
-            <input type="number" id="bankMonthlyPay" class="input-field" placeholder="150000" oninput="saveSettings()">
-          </div>
-          
-          <div class="progress-track">
-            <div class="progress-fill gold" id="bankProgressBar" style="width: 0%"></div>
-          </div>
-          <p style="font-size:0.8rem; color:var(--text-muted); text-align:right;" id="bankProgressText">Прогресс: 0%</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ВКЛАДКА 4: СТРАТЕГИЯ (КВАРТИРА / МАШИНА) -->
-    <section id="tab-strategy" class="tab-section">
-      <div class="grid-container">
-        <!-- План на квартиру -->
-        <div class="card blue-accent">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">🏠</span> Цель 2031: Своя Квартира</div>
-          </div>
-          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">Расчет первоначального взноса (ПВ).</p>
-          
-          <div class="input-group">
-            <label>Стоимость квартиры:</label>
-            <input type="number" id="aptCost" class="input-field" placeholder="25000000" oninput="calcStrategy()">
-          </div>
-          <div class="input-group">
-            <label>Размер ПВ (%):</label>
-            <input type="number" id="aptDownPct" class="input-field" placeholder="20" oninput="calcStrategy()">
-          </div>
-          <div class="input-group">
-            <label>Срок кредита (лет):</label>
-            <input type="number" id="aptYears" class="input-field" placeholder="15" oninput="calcStrategy()">
-          </div>
-
-          <div class="result-box">
-            <div class="result-row"><span>Нужно на ПВ:</span> <span class="result-val red" id="aptDownSum">0</span></div>
-            <div class="result-row"><span>Ипотека в месяц:</span> <span class="result-val" id="aptMonthlyPay">0</span></div>
-            <div class="result-row" style="border-top:1px solid var(--border-color); padding-top:10px; margin-top:10px;">
-              <span>Нужно откладывать в день:</span> 
-              <span class="result-val green" id="aptDailySave">0</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- План на машину -->
-        <div class="card green-accent">
-          <div class="card-header">
-            <div class="card-title"><span style="font-size:1.2rem;">🚗</span> Цель: Новая Машина</div>
-          </div>
-          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">Стоимость авто с салона.</p>
-          
-          <div class="input-group">
-            <label>Цена авто:</label>
-            <input type="number" id="carCost" class="input-field" placeholder="6000000" oninput="calcStrategy()">
-          </div>
-          <div class="input-group">
-            <label>Первый взнос:</label>
-            <input type="number" id="carDownSum" class="input-field" placeholder="1500000" oninput="calcStrategy()">
-          </div>
-          
-          <div class="result-box">
-            <div class="result-row"><span>Сколько смен нужно:</span> <span class="result-val red" id="carShifts">0</span></div>
-            <p style="font-size:0.75rem; color:var(--text-muted); margin-top: 10px; font-style: italic;">* Расчет по среднему доходу из вкладки "Аналитика"</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ВКЛАДКА 5: НАСТРОЙКИ -->
-    <section id="tab-settings" class="tab-section">
+    <!-- ВКЛАДКА: ДНЕВНИК -->
+    <section id="tab-diary" class="tab">
       <div class="card">
         <div class="card-header">
-          <div class="card-title"><span style="font-size:1.2rem;">⚙️</span> Базовые параметры</div>
+          <div class="card-title">📖 Дневник</div>
+          <button class="btn btn-gold" onclick="openModal()" style="width: auto;">+ Запись</button>
         </div>
-        
-        <div class="settings-section">
-          <div class="settings-title">Кредит и долги</div>
-          <div class="input-group">
-            <label>Тело кредита (тг):</label>
-            <input type="number" id="setBankDebt" class="input-field" placeholder="1500000" oninput="syncSettings()">
-          </div>
-          <div class="input-group">
-            <label>Ежемесячный платеж (тг):</label>
-            <input type="number" id="setMonthlyPay" class="input-field" placeholder="150000" oninput="syncSettings()">
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <div class="settings-title">Дедлайн (До прилета)</div>
-          <div class="input-group">
-            <label>Дата (ГГГГ-ММ-ДД):</label>
-            <input type="date" id="setDeadline" class="input-field" oninput="syncSettings()">
-          </div>
-        </div>
-
-        <button class="btn btn-gold" onclick="forceSaveSettings()" style="width:100%; margin-top:20px;">Сохранить глобально</button>
+        <div class="journal-list" id="diaryList"></div>
       </div>
     </section>
 
+    <!-- ВКЛАДКА: ДИСЦИПЛИНА -->
+    <section id="tab-habit" class="tab">
+      <div class="grid">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚔️ Стержень</div></div>
+          <div class="box" style="text-align:center;">
+            <div style="font-size:0.8rem; color:var(--text-muted);">ДНЕЙ ПОДРЯД</div>
+            <div style="font-size:3rem; font-weight:900; color:var(--green);" id="streakNum">0</div>
+          </div>
+          <label style="display:flex; gap:10px; margin-bottom:15px; cursor:pointer;"><input type="checkbox" class="hab" id="h1" onchange="saveHabits()"> Выспался</label>
+          <label style="display:flex; gap:10px; margin-bottom:15px; cursor:pointer;"><input type="checkbox" class="hab" id="h2" onchange="saveHabits()"> Отработал смену</label>
+          <label style="display:flex; gap:10px; margin-bottom:15px; cursor:pointer;"><input type="checkbox" class="hab" id="h3" onchange="saveHabits()"> Не следил за ней</label>
+          <label style="display:flex; gap:10px; margin-bottom:15px; cursor:pointer;"><input type="checkbox" class="hab" id="h4" onchange="saveHabits()"> Спорт/Ремонт</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ВКЛАДКА: СТРАТЕГИЯ -->
+    <section id="tab-strategy" class="tab">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏠 Квартира 2031</div></div>
+        <div class="input-group"><label>Стоимость:</label><input type="number" id="aptCost" class="input" value="25000000" oninput="calcApt()"></div>
+        <div class="input-group"><label>ПВ (%):</label><input type="number" id="aptPct" class="input" value="20" oninput="calcApt()"></div>
+        <div class="box">
+          <div class="row"><span>Нужно на ПВ:</span><span class="val red" id="aptPV">0</span></div>
+          <div class="row"><span>Откладывать в день (5 лет):</span><span class="val green" id="aptDay">0</span></div>
+        </div>
+      </div>
+    </section>
+    
   </main>
 
-  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <!-- МОДАЛКА ДНЕВНИКА -->
+  <div class="modal" id="diaryModal">
+    <div class="modal-box">
+      <h2 style="color:var(--gold); margin-bottom:10px;">Новая запись</h2>
+      <div class="stickers">
+        <button class="st-btn" onclick="selSt(this,'🔥')">🔥</button>
+        <button class="st-btn" onclick="selSt(this,'💰')">💰</button>
+        <button class="st-btn" onclick="selSt(this,'⚔️')">⚔️</button>
+        <button class="st-btn" onclick="selSt(this,'🧠')">🧠</button>
+        <button class="st-btn" onclick="selSt(this,'💀')">💀</button>
+      </div>
+      <textarea class="textarea" id="diaryText" placeholder="Что произошло сегодня?"></textarea>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" onclick="closeModal()">Отмена</button>
+        <button class="btn btn-gold" onclick="saveDiary()">Сохранить в облако</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- НАВИГАЦИЯ -->
   <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="switchTab('dashboard', this)">
-      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-      <span>Штаб</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('analytics', this)">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-      <span>Аналитика</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('debts', this)">
-      <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-      <span>Долги</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('strategy', this)">
-      <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
-      <span>Стратегия</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('settings', this)">
-      <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-      <span>Настройки</span>
-    </button>
+    <button class="nav-btn active" onclick="nav('fin', this)"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg><span>Финансы</span></button>
+    <button class="nav-btn" onclick="nav('diary', this)"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7zm1-11h-2v3H8v2h3v3h2v-3h3v-2h-3V8z"/></svg><span>Дневник</span></button>
+    <button class="nav-btn" onclick="nav('habit', this)"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><span>Стержень</span></button>
+    <button class="nav-btn" onclick="nav('strategy', this)"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg><span>Цели</span></button>
   </nav>
 
 </div>
 
 <script>
-  /* =========================================
-     ЛОГИКА ПРИЛОЖЕНИЯ (V3.0)
-     ========================================= */
-
-  // --- ГЛОБАЛЬНЫЕ ДАННЫЕ ---
-  let appData = {
-    settings: {
-      bankDebt: 1500000,
-      monthlyPay: 150000,
-      deadline: "2026-12-16"
-    },
-    friendDebts: JSON.parse(localStorage.getItem('core_friendDebts')) || [
-      { name: "Абылай", sum: 20000, date: "10.11.2026" }
-    ],
-    dailyLogs: JSON.parse(localStorage.getItem('core_dailyLogs')) || [], // { date: 'DD.MM', net: 10000 }
-    streak: JSON.parse(localStorage.getItem('core_streak')) || { count: 0, lastDate: null }
+  /* ==========================================
+     FIREBASE ИНИЦИАЛИЗАЦИЯ
+     ========================================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyDrPu0bv13jvnju8JJyHkgeRQcf66fDtlk",
+    authDomain: "our-tracker-3cbb5.firebaseapp.com",
+    databaseURL: "https://our-tracker-3cbb5-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "our-tracker-3cbb5"
   };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  let myChart = null;
+  // Ссылки на ветки в базе (Папки)
+  const DB_FIN = db.ref('man_core/finance');
+  const DB_DIARY = db.ref('man_core/diary');
+  const DB_HABITS = db.ref('man_core/discipline');
 
-  // --- 1. НАВИГАЦИЯ ---
-  function switchTab(tabId, btnElement) {
-    document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    
+  // Глобальные данные
+  let data = { finance: { bankDebt: 0, bankPay: 0, debts: [] }, diary: [], habits: {}, streak: { count: 0, lastDate: null } };
+  let curSticker = '⚔️';
+  let curTab = 'fin';
+
+  /* ==========================================
+     СИНХРОНИЗАЦИЯ С БАЗОЙ (СЛУШАЕМ ИЗМЕНЕНИЯ)
+     ========================================== */
+   
+  // 1. Финансы
+  DB_FIN.on('value', (snap) => {
+    if(snap.exists()) data.finance = snap.val();
+    renderFinance();
+  });
+
+  // 2. Дневник
+  DB_DIARY.on('value', (snap) => {
+    if(snap.exists()) data.diary = snap.val();
+    renderDiary();
+  });
+
+  // 3. Дисциплина
+  DB_HABITS.on('value', (snap) => {
+    if(snap.exists()) {
+      const val = snap.val();
+      if(val.habits) data.habits = val.habits;
+      if(val.streak) data.streak = val.streak;
+    }
+    renderHabits();
+  });
+
+  /* ==========================================
+     ЛОГИКА НАВИГАЦИИ
+     ========================================== */
+  function nav(tabId, btn) {
+    curTab = tabId;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
-    if(btnElement) btnElement.classList.add('active');
-
-    if (tabId === 'analytics') {
-      setTimeout(renderChart, 100); // Даем время на отрисовку DOM
-    }
+    btn.classList.add('active');
   }
 
-  // --- 2. НАСТРОЙКИ ---
-  function loadSettings() {
-    const saved = JSON.parse(localStorage.getItem('core_settings'));
-    if (saved) appData.settings = saved;
-    
-    document.getElementById('setBankDebt').value = appData.settings.bankDebt;
-    document.getElementById('setMonthlyPay').value = appData.settings.monthlyPay;
-    document.getElementById('setDeadline').value = appData.settings.deadline;
+  /* ==========================================
+     ЛОГИКА ФИНАНСОВ
+     ========================================== */
+  function addDailyIncome() {
+    const m = parseFloat(document.getElementById('finMorning').value);
+    const e = parseFloat(document.getElementById('finEvening').value);
+    if(isNaN(m) || isNaN(e)) return alert("Заполни оба поля!");
 
-    // Дублируем на вкладку долгов
-    document.getElementById('bankDebtAmount').value = appData.settings.bankDebt;
-    document.getElementById('bankMonthlyPay').value = appData.settings.monthlyPay;
-
-    updateDashboardStats();
-  }
-
-  function syncSettings() {
-    appData.settings.bankDebt = parseFloat(document.getElementById('setBankDebt').value) || 0;
-    appData.settings.monthlyPay = parseFloat(document.getElementById('setMonthlyPay').value) || 0;
-    appData.settings.deadline = document.getElementById('setDeadline').value;
-    
-    document.getElementById('bankDebtAmount').value = appData.settings.bankDebt;
-    document.getElementById('bankMonthlyPay').value = appData.settings.monthlyPay;
-
-    localStorage.setItem('core_settings', JSON.stringify(appData.settings));
-    updateDashboardStats();
-  }
-
-  function saveSettings() {
-    // Вызывается при редактировании на вкладке долгов
-    appData.settings.bankDebt = parseFloat(document.getElementById('bankDebtAmount').value) || 0;
-    appData.settings.monthlyPay = parseFloat(document.getElementById('bankMonthlyPay').value) || 0;
-    
-    document.getElementById('setBankDebt').value = appData.settings.bankDebt;
-    document.getElementById('setMonthlyPay').value = appData.settings.monthlyPay;
-
-    localStorage.setItem('core_settings', JSON.stringify(appData.settings));
-    updateDashboardStats();
-  }
-
-  function forceSaveSettings() {
-    syncSettings();
-    alert("Настройки сохранены!");
-  }
-
-  // --- 3. ДАШБОРД И ТАЙМЕР ---
-  function updateCountdown() {
-    const targetDate = new Date(appData.settings.deadline + "T00:00:00").getTime();
-    const now = new Date().getTime();
-    const distance = targetDate - now;
-
-    if (distance < 0) {
-      document.getElementById("countdownTimer").innerHTML = "ВРЕМЯ ВЫШЛО";
-      return;
-    }
-    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    document.getElementById("countdownTimer").innerHTML = `${days}д : ${hours}ч`;
-  }
-
-  function updateDashboardStats() {
-    // Кредит
-    const initialDebt = 2000000; // Предполагаемый изначальный кредит (для прогресс-бара)
-    let bankDebt = appData.settings.bankDebt;
-    document.getElementById('dashBankDebt').innerText = bankDebt.toLocaleString() + ' тг';
-    document.getElementById('dashMonthlyPay').innerText = appData.settings.monthlyPay.toLocaleString() + ' тг';
-    
-    // Прогресс банка
-    let progress = ((initialDebt - bankDebt) / initialDebt) * 100;
-    if (progress < 0) progress = 0;
-    if (progress > 100) progress = 100;
-    document.getElementById('bankProgressBar').style.width = progress + '%';
-    document.getElementById('bankProgressText').innerText = `Выплачено: ${progress.toFixed(1)}%`;
-
-    // Друзья
-    let friendTotal = appData.friendDebts.reduce((acc, curr) => acc + curr.sum, 0);
-    document.getElementById('dashFriendDebt').innerText = friendTotal.toLocaleString() + ' тг';
-
-    document.getElementById('navDebt').innerText = (bankDebt + friendTotal).toLocaleString();
-    
-    // Стрик
-    document.getElementById('navStreak').innerText = appData.streak.count;
-  }
-
-  // --- 4. МОТИВАЦИЯ ---
-  const motivations = [
-    "Твоя боль — это топливо. Не трать его на слезы.",
-    "Она прилетит 16-го. Кем она тебя увидит? Слабым или сильным?",
-    "Деньги не пахнут. Они пахнут свободой.",
-    "Закрой долги. Купи машину. Забудь о том, что тебя бросили.",
-    "Пока ты ждешь ее сообщения, кто-то зарабатывает твои деньги.",
-    "Ты не имеешь права сдаваться. Ты — мужчина.",
-    "Сделай это ради себя. Не ради нее.",
-    "Твоя старая машина сгнила. Твоя старая жизнь тоже. Пора строить новую.",
-    "Каждый час в такси — это кирпич в фундамент твоей империи.",
-    "Она не вернется к слабому. Стань тем, кого она боится потерять."
-  ];
-
-  function generateMotivation() {
-    const randomIndex = Math.floor(Math.random() * motivations.length);
-    document.getElementById("quoteBox").innerText = `"${motivations[randomIndex]}"`;
-  }
-
-  // --- 5. ЛОГИРОВАНИЕ ДНЯ ---
-  function saveDailyLog() {
-    const morning = parseFloat(document.getElementById('morningBalance').value);
-    const evening = parseFloat(document.getElementById('eveningBalance').value);
-
-    if (isNaN(morning) || isNaN(evening)) {
-      alert("Введи баланс на утро и вечер!");
-      return;
-    }
-
-    const net = evening - morning;
-    if (net <= 0) {
-      alert("Похоже, ты сегодня в минусе или ничего не заработал.");
-    }
-
+    const net = e - m;
     const today = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-    const dateStr = new Date().toDateString();
+    
+    // Сохраняем в Firebase (добавляем в массив логов)
+    if(!data.finance.logs) data.finance.logs = [];
+    data.finance.logs.push({ date: today, net: net });
+    DB_FIN.update({ logs: data.finance.logs });
 
-    // Сохраняем лог
-    appData.dailyLogs.push({ date: today, net: net });
-    localStorage.setItem('core_dailyLogs', JSON.stringify(appData.dailyLogs));
-
-    // Проверка стрика (если это первый лог за сегодня)
-    if (appData.streak.lastDate !== dateStr) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      if (appData.streak.lastDate === yesterday.toDateString()) {
-        appData.streak.count++;
-      } else {
-        appData.streak.count = 1;
+    // Обновляем стрик
+    if(net > 0) {
+      const d = new Date().toDateString();
+      if(data.streak.lastDate !== d) {
+        data.streak.count++;
+        data.streak.lastDate = d;
+        DB_HABITS.update({ streak: data.streak });
       }
-      appData.streak.lastDate = dateStr;
-      localStorage.setItem('core_streak', JSON.stringify(appData.streak));
     }
 
-    document.getElementById('dailyNet').innerText = net.toLocaleString() + ' тг';
-    
-    // Очищаем поля
-    document.getElementById('morningBalance').value = '';
-    document.getElementById('eveningBalance').value = '';
-
-    updateDashboardStats();
-    alert(`День зафиксирован! Чистыми: ${net.toLocaleString()} тг.`);
+    document.getElementById('finDayResult').style.display = 'block';
+    document.getElementById('finNet').innerText = net.toLocaleString() + ' тг';
+    document.getElementById('finMorning').value = '';
+    document.getElementById('finEvening').value = '';
+    updateNavStats();
   }
 
-  // --- 6. ДОЛГИ ДРУЗЬЯМ ---
-  function renderFriendDebts() {
-    const container = document.getElementById('friendDebtList');
-    container.innerHTML = '';
-    let total = 0;
-
-    if (appData.friendDebts.length === 0) {
-      container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Долгов друзьям нет.</p>';
-    }
-
-    appData.friendDebts.forEach((debt, index) => {
-      total += debt.sum;
-      const el = document.createElement('div');
-      el.className = 'debt-item';
-      el.innerHTML = `
-        <div class="debt-info">
-          <h4>${debt.name}</h4>
-          <span>${debt.date}</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:15px;">
-          <div class="debt-amount">${debt.sum.toLocaleString()} тг</div>
-          <button class="debt-btn-del" onclick="deleteFriendDebt(${index})" title="Закрыть долг">✔</button>
-        </div>
-      `;
-      container.appendChild(el);
-    });
-
-    document.getElementById('totalFriendDebt').innerText = total.toLocaleString();
-    localStorage.setItem('core_friendDebts', JSON.stringify(appData.friendDebts));
+  function saveBankDebt() {
+    const debt = parseFloat(document.getElementById('bankDebt').value) || 0;
+    const pay = parseFloat(document.getElementById('bankPay').value) || 0;
+    DB_FIN.update({ bankDebt: debt, bankPay: pay });
   }
 
   function addFriendDebt() {
-    const name = document.getElementById('newFriendName').value;
-    const sum = parseFloat(document.getElementById('newFriendSum').value);
+    const name = document.getElementById('frName').value;
+    const sum = parseFloat(document.getElementById('frSum').value);
+    if(!name || isNaN(sum)) return;
+
+    if(!data.finance.debts) data.finance.debts = [];
+    data.finance.debts.push({ name, sum, date: new Date().toLocaleDateString('ru-RU') });
+    DB_FIN.update({ debts: data.finance.debts });
     
-    if (name && sum > 0) {
-      const today = new Date().toLocaleDateString('ru-RU');
-      appData.friendDebts.push({ name, sum, date: today });
-      document.getElementById('newFriendName').value = '';
-      document.getElementById('newFriendSum').value = '';
-      renderFriendDebts();
-      updateDashboardStats();
-    }
+    document.getElementById('frName').value = '';
+    document.getElementById('frSum').value = '';
   }
 
   function deleteFriendDebt(index) {
     if(confirm("Долг закрыт?")) {
-      appData.friendDebts.splice(index, 1);
-      renderFriendDebts();
-      updateDashboardStats();
+      data.finance.debts.splice(index, 1);
+      DB_FIN.update({ debts: data.finance.debts });
     }
   }
 
-  // --- 7. АНАЛИТИКА И ГРАФИКИ ---
-  function renderChart() {
-    const ctx = document.getElementById('incomeChart').getContext('2d');
+  function renderFinance() {
+    if(document.getElementById('bankDebt')) {
+      document.getElementById('bankDebt').value = data.finance.bankDebt || 0;
+      document.getElementById('bankPay').value = data.finance.bankPay || 0;
+    }
     
-    // Берем последние 14 записей
-    const lastLogs = appData.dailyLogs.slice(-14);
-    const labels = lastLogs.map(log => log.date);
-    const dataPoints = lastLogs.map(log => log.net);
+    const list = document.getElementById('friendDebtsList');
+    if(list) {
+      list.innerHTML = '';
+      if(data.finance.debts && data.finance.debts.length > 0) {
+        data.finance.debts.forEach((d, i) => {
+          list.innerHTML += `<div class="box" style="display:flex; justify-content:space-between; align-items:center;">
+            <div><b>${d.name}</b><br><small>${d.date}</small></div>
+            <div style="display:flex; gap:15px; align-items:center;">
+              <span class="val red">${d.sum.toLocaleString()} тг</span>
+              <button onclick="deleteFriendDebt(${i})" style="background:none; border:none; color:green; cursor:pointer; font-size:1.2rem;">✔</button>
+            </div>
+          </div>`;
+        });
+      }
+    }
+    updateNavStats();
+  }
 
-    if (myChart) {
-      myChart.destroy(); // Уничтожаем старый график перед созданием нового
+  /* ==========================================
+     ЛОГИКА ДНЕВНИКА (С СИНХРОНИЗАЦИЕЙ)
+     ========================================== */
+  function openModal() {
+    document.getElementById('diaryModal').classList.add('active');
+    document.getElementById('diaryText').value = '';
+    curSticker = '⚔️';
+    document.querySelectorAll('.st-btn').forEach(b => b.classList.remove('sel'));
+    document.querySelector('.st-btn:nth-child(3)').classList.add('sel');
+  }
+
+  function closeModal() {
+    document.getElementById('diaryModal').classList.remove('active');
+  }
+
+  function selSt(btn, emoji) {
+    document.querySelectorAll('.st-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    curSticker = emoji;
+  }
+
+  function generateAISummary(text) {
+    const t = text.toLowerCase();
+    if(t.includes('заработал') || t.includes('смена') || t.includes('такс')) return "Финансовый фокус. Смена закрыта.";
+    if(t.includes('устал') || t.includes('сон') || t.includes('болит')) return "Нужен отдых. Восстановление сил.";
+    if(t.includes('она') || t.includes('любовь')) return "Эмоциональный фон. Работа над собой.";
+    return "Рабочий день. Двигаемся дальше.";
+  }
+
+  function saveDiary() {
+    const text = document.getElementById('diaryText').value.trim();
+    if(!text) return alert("Напиши текст!");
+
+    const today = new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    const newEntry = {
+      id: Date.now(),
+      date: today,
+      sticker: curSticker,
+      summary: generateAISummary(text),
+      text: text
+    };
+
+    if(!data.diary) data.diary = [];
+    data.diary.unshift(newEntry);
+    
+    // Сохраняем в Firebase!
+    DB_DIARY.set(data.diary);
+    closeModal();
+  }
+
+  function renderDiary() {
+    const list = document.getElementById('diaryList');
+    if(!list) return;
+    list.innerHTML = '';
+
+    if(!data.diary || data.diary.length === 0) {
+      list.innerHTML = '<p style="text-align:center; color:#666;">Записей пока нет.</p>';
+      return;
     }
 
-    myChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Чистый доход за день (тг)',
-          data: dataPoints,
-          borderColor: '#2ed573', // Зеленый
-          backgroundColor: 'rgba(46, 213, 115, 0.1)',
-          borderWidth: 2,
-          pointBackgroundColor: '#fff',
-          pointBorderColor: '#2ed573',
-          pointRadius: 4,
-          fill: true,
-          tension: 0.3 // Плавные линии
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#fff' } }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: '#333' },
-            ticks: { color: '#888' }
-          },
-          x: {
-            grid: { display: false },
-            ticks: { color: '#888' }
-          }
-        }
-      }
+    data.diary.forEach(entry => {
+      const el = document.createElement('div');
+      el.className = 'j-card';
+      el.onclick = () => el.classList.toggle('open');
+      el.innerHTML = `
+        <div class="j-sticker">${entry.sticker}</div>
+        <div class="j-content">
+          <div class="j-date">${entry.date}</div>
+          <div class="j-summary">${entry.summary}</div>
+          <div class="j-text">${entry.text}</div>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  /* ==========================================
+     ЛОГИКА ДИСЦИПЛИНЫ
+     ========================================== */
+  function saveHabits() {
+    const checks = document.querySelectorAll('.hab');
+    let newHabits = {};
+    checks.forEach(c => { newHabits[c.id] = c.checked; });
+    
+    DB_HABITS.update({ habits: newHabits });
+  }
+
+  function renderHabits() {
+    const checks = document.querySelectorAll('.hab');
+    checks.forEach(c => {
+      if(data.habits && data.habits[c.id]) c.checked = true;
+      else c.checked = false;
     });
 
-    // Считаем средние
-    if (dataPoints.length > 0) {
-      const sum = dataPoints.reduce((a, b) => a + b, 0);
-      const avg = sum / dataPoints.length;
-      document.getElementById('avgDailyIncome').innerText = Math.round(avg).toLocaleString() + ' тг';
-      document.getElementById('projMonthlyIncome').innerText = Math.round(avg * 30).toLocaleString() + ' тг';
+    if(document.getElementById('streakNum')) {
+      document.getElementById('streakNum').innerText = data.streak.count || 0;
     }
+    updateNavStats();
   }
 
-  // --- 8. СТРАТЕГИЯ (КВАРТИРА / МАШИНА) ---
-  function calcStrategy() {
-    // Квартира
-    const aptCost = parseFloat(document.getElementById('aptCost').value) || 0;
-    const downPct = parseFloat(document.getElementById('aptDownPct').value) || 20;
-    const years = parseFloat(document.getElementById('aptYears').value) || 15;
+  /* ==========================================
+     СТРАТЕГИЯ И ВСПОМОГАТЕЛЬНОЕ
+     ========================================== */
+  function calcApt() {
+    const cost = parseFloat(document.getElementById('aptCost').value) || 0;
+    const pct = parseFloat(document.getElementById('aptPct').value) || 0;
     
-    const downSum = aptCost * (downPct / 100);
-    const loanSum = aptCost - downSum;
-    
-    // Примерная ипотечная ставка в КЗ (пусть будет 18% годовых для консервативного расчета)
-    const rate = 0.18 / 12; 
-    const months = years * 12;
-    
-    // Формула аннуитетного платежа
-    let monthlyPay = 0;
-    if (loanSum > 0 && rate > 0) {
-      monthlyPay = loanSum * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
-    }
+    const pv = cost * (pct/100);
+    const day = pv / (5 * 365);
 
-    document.getElementById('aptDownSum').innerText = Math.round(downSum).toLocaleString() + ' тг';
-    document.getElementById('aptMonthlyPay').innerText = Math.round(monthlyPay).toLocaleString() + ' тг';
-    
-    // Сколько нужно откладывать в день (если копить 5 лет до 2031)
-    const daysToSave = 5 * 365; 
-    const dailySave = downSum / daysToSave;
-    document.getElementById('aptDailySave').innerText = Math.round(dailySave).toLocaleString() + ' тг/день';
-
-    // Машина
-    const carCost = parseFloat(document.getElementById('carCost').value) || 0;
-    const carDown = parseFloat(document.getElementById('carDownSum').value) || 0;
-    
-    const avgIncomeStr = document.getElementById('avgDailyIncome').innerText.replace(/\D/g, '');
-    const avgIncome = parseFloat(avgIncomeStr) || 1;
-
-    if (carCost > 0 && carDown > 0) {
-      const shifts = Math.ceil(carDown / avgIncome);
-      document.getElementById('carShifts').innerText = shifts + ' смен';
-    }
+    document.getElementById('aptPV').innerText = Math.round(pv).toLocaleString() + ' тг';
+    document.getElementById('aptDay').innerText = Math.round(day).toLocaleString() + ' тг';
   }
 
-  // --- 9. ИНИЦИАЛИЗАЦИЯ ---
-  window.addEventListener('DOMContentLoaded', () => {
-    loadSettings();
-    updateCountdown();
-    setInterval(updateCountdown, 1000 * 60); // Обновляем таймер раз в минуту
+  function updateNavStats() {
+    let fDebt = 0;
+    if(data.finance.debts) {
+      data.finance.debts.forEach(d => fDebt += d.sum);
+    }
+    const total = (data.finance.bankDebt || 0) + fDebt;
 
-    renderFriendDebts();
-    generateMotivation();
+    if(document.getElementById('navDebt')) document.getElementById('navDebt').innerText = total.toLocaleString();
+    if(document.getElementById('navStreak')) document.getElementById('navStreak').innerText = data.streak.count || 0;
+  }
 
-    // Первичная отрисовка графика (скрыто, но данные готовы)
-    setTimeout(renderChart, 500);
-    
-    // Установка дефолтных значений для стратегии
-    document.getElementById('aptCost').value = 25000000;
-    document.getElementById('carCost').value = 6000000;
-    document.getElementById('carDownSum').value = 1500000;
-    calcStrategy();
-  });
+  // Init Calc
+  window.onload = () => {
+    calcApt();
+  };
 
 </script>
 </body>
