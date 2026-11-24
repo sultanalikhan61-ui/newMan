@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Я — Стержень | Мое Ядро</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050505;
+      --surface: #121212;
+      --surface-light: #1e1e1e;
+      --border: #2a2a2a;
+      --text-main: #e0e0e0;
+      --text-muted: #888;
+      --accent: #b30000; /* Глубокий, кроваво-красный */
+      --accent-hover: #ff0000;
+      --success: #2ed573;
+      --gold: #d4af37;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Montserrat', sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 0%, rgba(179, 0, 0, 0.05) 0%, transparent 70%);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* --- МАНИФЕСТ --- */
+    .manifesto {
+      text-align: center;
+      padding: 60px 20px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .manifesto h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .manifesto p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto 15px auto;
+    }
+
+    .manifesto .highlight {
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 1.2rem;
+      display: block;
+      margin-top: 20px;
+    }
+
+    /* --- СЕТКА --- */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      .manifesto h1 { font-size: 2rem; }
+    }
+
+    /* --- КАРТОЧКИ --- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 10px;
+    }
+
+    .card-title span.icon {
+      font-size: 1.5rem;
+    }
+
+    /* --- ФИНАНСЫ --- */
+    .finance-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+
+    .finance-input {
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 6px;
+      width: 120px;
+      text-align: right;
+      font-family: 'Montserrat';
+      font-weight: 600;
+    }
+
+    .finance-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 12px;
+      background: var(--surface-light);
+      border-radius: 6px;
+      margin: 20px 0 10px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .progress-text {
+      text-align: right;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    /* --- ДИСЦИПЛИНА --- */
+    .habit-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .habit-item input[type="checkbox"] {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface-light);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .habit-item input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .habit-item input[type="checkbox"]:checked::after {
+      content: '✔';
+      position: absolute;
+      color: #fff;
+      font-size: 14px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .habit-text {
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .habit-item input[type="checkbox"]:checked + .habit-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    /* --- ПРАВИЛА --- */
+    .rules-list {
+      list-style: none;
+    }
+
+    .rules-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--surface-light);
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 10px;
+    }
+
+    .rules-list li::before {
+      content: '■';
+      color: var(--accent);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- МАНИФЕСТ -->
+  <section class="manifesto">
+    <h1>Мое Ядро</h1>
+    <p>Я перестаю вкладывать всю душу туда, где ее не ценят. Я строю себя. Свои цели. Свою империю.</p>
+    <p>Я не завишу от ее настроения. Я не жду ее сообщений. Я тот, кто делает.</p>
+    <span class="highlight">Моё счастье — это мой приоритет №1.</span>
+  </section>
+
+  <div class="grid">
+    
+    <!-- ФИНАНСЫ -->
+    <div class="card">
+      <div class="card-title"><span class="icon">💰</span> Финансовый фокус</div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введи текущие показатели. Прогресс сохраняется автоматически.</p>
+      
+      <div class="finance-row">
+        <span>Цель (Машина/Будущее):</span>
+        <input type="number" id="goalAmount" class="finance-input" placeholder="1000000" oninput="updateFinance()">
+      </div>
+      <div class="finance-row">
+        <span>Текущий капитал:</span>
+        <input type="number" id="currentAmount" class="finance-input" placeholder="0" oninput="updateFinance()">
+      </div>
+      <div class="finance-row">
+        <span>Остаток долга:</span>
+        <input type="number" id="debtAmount" class="finance-input" placeholder="130000" oninput="updateFinance()">
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar" id="financeProgress"></div>
+      </div>
+      <div class="progress-text" id="financePercent">0% к цели</div>
+    </div>
+
+    <!-- ДИСЦИПЛИНА -->
+    <div class="card">
+      <div class="card-title"><span class="icon">⚔️</span> Ежедневный стержень</div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Отметь то, что ты сделал сегодня для себя.</p>
+      
+      <label class="habit-item">
+        <input type="checkbox" class="habit-check" id="h1" onchange="saveHabits()">
+        <span class="habit-text">Выспался (мин. 6-7 часов)</span>
+      </label>
+      
+      <label class="habit-item">
+        <input type="checkbox" class="habit-check" id="h2" onchange="saveHabits()">
+        <span class="habit-text">Работал над доходом (таксовал/чинил)</span>
+      </label>
+      
+      <label class="habit-item">
+        <input type="checkbox" class="habit-check" id="h3" onchange="saveHabits()">
+        <span class="habit-text">Физическая нагрузка / спорт</span>
+      </label>
+
+      <label class="habit-item">
+        <input type="checkbox" class="habit-check" id="h4" onchange="saveHabits()">
+        <span class="habit-text">Не проверял ее соцсети/гео</span>
+      </label>
+
+      <label class="habit-item">
+        <input type="checkbox" class="habit-check" id="h5" onchange="saveHabits()">
+        <span class="habit-text">Сделал что-то для СЕБЯ</span>
+      </label>
+    </div>
+
+  </div>
+
+  <!-- ПРАВИЛА -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📜</span> Мои новые правила</div>
+    <ul class="rules-list">
+      <li>Я не бегаю за ней. Если она хочет быть со мной — она найдет способ.</li>
+      <li>Я не позволяю ее действиям разрушать мое настроение.</li>
+      <li>Сначала моя машина, мои долги, мой сон. Потом ее капризы.</li>
+      <li>Если она уйдет — я не буду держать. Я буду строить дальше.</li>
+      <li>Я не заслуживаю боли. Я заслуживаю покоя и уважения.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    Создано для меня. 25-е число. Точка отсчета новой жизни.
+  </div>
+
+</div>
+
+<script>
+  // --- ЛОГИКА ФИНАНСОВ ---
+  function updateFinance() {
+    const goal = parseFloat(document.getElementById('goalAmount').value) || 0;
+    const current = parseFloat(document.getElementById('currentAmount').value) || 0;
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('core_goal', goal);
+    localStorage.setItem('core_current', current);
+
+    if (goal > 0) {
+      let percent = (current / goal) * 100;
+      if (percent > 100) percent = 100;
+      
+      document.getElementById('financeProgress').style.width = percent + '%';
+      document.getElementById('financePercent').innerText = percent.toFixed(1) + '% к цели';
+    } else {
+      document.getElementById('financeProgress').style.width = '0%';
+      document.getElementById('financePercent').innerText = '0% к цели';
+    }
+  }
+
+  // --- ЛОГИКА ДИСЦИПЛИНЫ ---
+  function saveHabits() {
+    const checks = document.querySelectorAll('.habit-check');
+    checks.forEach(check => {
+      localStorage.setItem('core_' + check.id, check.checked);
+    });
+  }
+
+  function loadHabits() {
+    const checks = document.querySelectorAll('.habit-check');
+    checks.forEach(check => {
+      const saved = localStorage.getItem('core_' + check.id);
+      if (saved === 'true') check.checked = true;
+    });
+  }
+
+  // --- СБРОС ЧЕК-ЛИСТА (Каждый новый день) ---
+  // Проверяем, новый ли сегодня день. Если да - сбрасываем галочки.
+  function checkNewDay() {
+    const today = new Date().toDateString();
+    const lastDate = localStorage.getItem('core_last_date');
+    
+    if (lastDate !== today) {
+      // Новый день - сбрасываем
+      const checks = document.querySelectorAll('.habit-check');
+      checks.forEach(check => {
+        check.checked = false;
+        localStorage.setItem('core_' + check.id, false);
+      });
+      localStorage.setItem('core_last_date', today);
+    }
+  }
+
+  // --- ИНИЦИАЛИЗАЦИЯ ---
+  window.addEventListener('DOMContentLoaded', () => {
+    // Загружаем деньги
+    const savedGoal = localStorage.getItem('core_goal');
+    const savedCurrent = localStorage.getItem('core_current');
+    if (savedGoal) document.getElementById('goalAmount').value = savedGoal;
+    if (savedCurrent) document.getElementById('currentAmount').value = savedCurrent;
+    updateFinance();
+
+    // Загружаем привычки
+    checkNewDay();
+    loadHabits();
+  });
+</script>
+
+</body>
+</html>
