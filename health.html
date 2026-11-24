@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Здоровье и Ресурс</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/core.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/core.js"></script>
+
+  <style>
+    .readiness-banner {
+      background: linear-gradient(135deg, rgba(46, 213, 115, 0.1), rgba(18, 18, 18, 0.95));
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--green);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .readiness-banner.warn {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(18, 18, 18, 0.95));
+      border-left-color: var(--gold);
+    }
+    .readiness-banner.danger {
+      background: linear-gradient(135deg, rgba(217, 4, 41, 0.14), rgba(18, 18, 18, 0.95));
+      border-left-color: var(--red);
+    }
+
+    .water-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .exercise-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      .exercise-grid { grid-template-columns: 1fr; }
+      .water-controls { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .ex-box {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ex-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ex-title {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .ex-count {
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--gold);
+    }
+    .ex-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mobility-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .mob-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      gap: 10px;
+    }
+    .mob-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      flex: 1;
+    }
+    .mob-label input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--green);
+    }
+    .mob-label.checked span {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .stretch-timer {
+      font-family: var(--mono);
+      font-size: 1.8rem;
+      font-weight: 900;
+      text-align: center;
+      color: var(--green);
+      background: #090909;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .history-item {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .history-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .history-metrics strong {
+      color: var(--text);
+    }
+
+    .rating-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .rate-btn {
+      flex: 1;
+      padding: 10px 6px;
+      border-radius: 8px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-weight: 800;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .rate-btn.active {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-nav">
+    <a href="index.html" class="back-btn">←</a>
+    <div class="page-title">Здоровье</div>
+    <div class="nav-badge" id="navReadinessBadge">0% РЕСУРС</div>
+  </main>
+
+  <main class="content">
+
+    <!-- 1. БАННЕР СТАТУСА ОРГАНИЗМА -->
+    <section class="readiness-banner" id="readinessBanner">
+      <div>
+        <div style="font-size:0.75rem; font-weight:900; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-muted);">
+          Статус ресурса на <span id="currentDateLabel">сегодня</span>
+        </div>
+        <div style="font-size:1.15rem; font-weight:900; margin-top:4px;" id="readinessHeadline">
+          Расчёт состояния...
+        </div>
+        <div style="font-size:0.86rem; color:#ccc; margin-top:4px;" id="readinessAdvice">
+          Заполни сон, воду и разминку, чтобы система оценила восстановление.
+        </div>
+      </div>
+      <div style="font-family:var(--mono); font-size:2rem; font-weight:900; color:var(--green);" id="readinessBigPct">0%</div>
+    </section>
+
+    <!-- 2. KPI КАРТОЧКИ -->
+    <section class="kpi-grid">
+      <div class="kpi-card green">
+        <div class="kpi-title">Сон сегодня</div>
+        <div class="kpi-val green" id="kpiSleepHours">0.0 ч</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-title">Вода за день</div>
+        <div class="kpi-val" style="color:var(--blue);" id="kpiWaterMl">0 мл</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-title">Повторений / Нагрузка</div>
+        <div class="kpi-val gold" id="kpiWorkoutTotal">0</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-title">Текущий вес</div>
+        <div class="kpi-val" id="kpiWeightVal">— кг</div>
+      </div>
+    </section>
+
+    <!-- 3. СОН И ВОДНЫЙ БАЛАНС -->
+    <div class="grid-2">
+
+      <!-- Сон и восстановление -->
+      <section class="card">
+        <div class="section-title">
+          <span>🛌 Сон и восстановление</span>
+          <span style="font-size:0.75rem; color:var(--gold);" id="sleepTargetBadge">Цель: 7.0 ч</span>
+        </div>
+
+        <div class="grid-2" style="gap:10px;">
+          <div class="input-group">
+            <label for="bedTimeInput">Лёг спать</label>
+            <input type="time" id="bedTimeInput" class="input-field" value="01:30" onchange="calcSleepFromTimes()">
+          </div>
+          <div class="input-group">
+            <label for="wakeTimeInput">Проснулся</label>
+            <input type="time" id="wakeTimeInput" class="input-field" value="08:30" onchange="calcSleepFromTimes()">
+          </div>
+        </div>
+
+        <div class="input-row">
+          <label for="sleepHoursInput">Итого часов сна (можно вручную)</label>
+          <input type="number" step="0.5" min="0" max="16" id="sleepHoursInput" class="input-field num" value="7.0" oninput="syncTodayFromInputs()">
+        </div>
+
+        <div class="input-group">
+          <label>Качество сна (1 — разбит, 5 — железный сон)</label>
+          <div class="rating-pills" id="sleepQualityPills">
+            <button type="button" class="rate-btn" data-q="1" onclick="setSleepQuality(1)">1</button>
+            <button type="button" class="rate-btn" data-q="2" onclick="setSleepQuality(2)">2</button>
+            <button type="button" class="rate-btn" data-q="3" onclick="setSleepQuality(3)">3</button>
+            <button type="button" class="rate-btn active" data-q="4" onclick="setSleepQuality(4)">4</button>
+            <button type="button" class="rate-btn" data-q="5" onclick="setSleepQuality(5)">5</button>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-fill" id="sleepProgressBar"></div>
+        </div>
+
+        <button class="btn btn-gold btn-sm" type="button" onclick="saveDailySnapshot(true)">Зафиксировать сон в журнал</button>
+      </section>
+
+      <!-- Водный баланс -->
+      <section class="card">
+        <div class="section-title">
+          <span>💧 Гидратация за рулём</span>
+          <span style="font-size:0.75rem; color:var(--blue);" id="waterPctLabel">0%</span>
+        </div>
+
+        <div class="input-row">
+          <label for="waterGoalInput">Дневная норма воды (мл)</label>
+          <input type="number" step="100" min="1000" max="6000" id="waterGoalInput" class="input-field num" value="2500" onchange="updateWaterGoal()">
+        </div>
+
+        <div style="font-family:var(--mono); font-size:1.7rem; font-weight:900; color:var(--blue); margin:8px 0;" id="waterFractionText">
+          0 / 2500 мл
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-fill" id="waterProgressBar" style="background:linear-gradient(90deg, #005bb5, var(--blue));"></div>
+        </div>
+
+        <div class="water-controls">
+          <button class="btn btn-dark btn-sm" type="button" onclick="addWater(250)">+250 мл</button>
+          <button class="btn btn-dark btn-sm" type="button" onclick="addWater(500)">+500 мл</button>
+          <button class="btn btn-dark btn-sm" type="button" onclick="addWater(750)">+750 мл</button>
+          <button class="btn btn-red btn-sm" type="button" onclick="resetWater()">Сброс</button>
+        </div>
+
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">
+          Держи бутылку 0.5–1.0 л в машине: обезвоживание снижает концентрацию на дороге быстрее, чем усталость.
+        </p>
+      </section>
+
+    </div>
+
+    <!-- 4. ФИЗИЧЕСКАЯ ФОРМА И РАЗГРУЗКА СПИНЫ -->
+    <div class="grid-2">
+
+      <!-- Силовая база -->
+      <section class="card">
+        <div class="section-title">
+          <span>💪 Силовая база за день</span>
+          <button class="btn btn-dark btn-sm" type="button" onclick="resetWorkoutCounters()">Обнулить</button>
+        </div>
+
+        <div class="exercise-grid">
+          <div class="ex-box">
+            <div class="ex-top">
+              <span class="ex-title">Отжимания</span>
+              <span class="ex-count" id="exPushups">0</span>
+            </div>
+            <div class="ex-btns">
+              <button class="btn btn-dark btn-sm" type="button" onclick="addExercise('pushups', 10)">+10</button>
+              <button class="btn btn-gold btn-sm" type="button" onclick="addExercise('pushups', 20)">+20</button>
+            </div>
+          </div>
+
+          <div class="ex-box">
+            <div class="ex-top">
+              <span class="ex-title">Приседания</span>
+              <span class="ex-count" id="exSquats">0</span>
+            </div>
+            <div class="ex-btns">
+              <button class="btn btn-dark btn-sm" type="button" onclick="addExercise('squats', 15)">+15</button>
+              <button class="btn btn-gold btn-sm" type="button" onclick="addExercise('squats', 30)">+30</button>
+            </div>
+          </div>
+
+          <div class="ex-box">
+            <div class="ex-top">
+              <span class="ex-title">Подтягивания / Тяга</span>
+              <span class="ex-count" id="exPullups">0</span>
+            </div>
+            <div class="ex-btns">
+              <button class="btn btn-dark btn-sm" type="button" onclick="addExercise('pullups', 5)">+5</button>
+              <button class="btn btn-gold btn-sm" type="button" onclick="addExercise('pullups', 10)">+10</button>
+            </div>
+          </div>
+
+          <div class="ex-box">
+            <div class="ex-top">
+              <span class="ex-title">Планка (сек)</span>
+              <span class="ex-count" id="exPlank">0</span>
+            </div>
+            <div class="ex-btns">
+              <button class="btn btn-dark btn-sm" type="button" onclick="addExercise('plank', 30)">+30с</button>
+              <button class="btn btn-gold btn-sm" type="button" onclick="addExercise('plank', 60)">+60с</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Протокол против застоя спины и шеи -->
+      <section class="card">
+        <div class="section-title">
+          <span>🦴 Анти-сидячий протокол</span>
+          <span style="font-size:0.75rem; color:var(--green);" id="mobilityDoneBadge">0 / 4</span>
+        </div>
+
+        <div class="stretch-timer" id="stretchTimerDisplay">05:00</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn btn-green btn-sm" style="flex:1;" type="button" onclick="startStretchTimer()">Старт 5 мин</button>
+          <button class="btn btn-dark btn-sm" style="flex:1;" type="button" onclick="resetStretchTimer()">Сброс</button>
+        </div>
+
+        <div class="mobility-list" id="mobilityListContainer"></div>
+      </section>
+
+    </div>
+
+    <!-- 5. АНТРОПОМЕТРИЯ И САМОЧУВСТВИЕ -->
+    <section class="card">
+      <div class="section-title">
+        <span>🩺 Замеры тела и самочувствие</span>
+        <button class="btn btn-gold btn-sm" type="button" onclick="saveDailySnapshot(true)">Сохранить день в историю</button>
+      </div>
+
+      <div class="grid-2" style="gap:12px;">
+        <div class="input-row">
+          <label for="weightInput">Вес тела (кг)</label>
+          <input type="number" step="0.1" min="40" max="200" id="weightInput" class="input-field num" placeholder="78.5" onchange="syncTodayFromInputs()">
+        </div>
+
+        <div class="input-row">
+          <label for="pulseInput">Пульс в покое (уд/мин)</label>
+          <input type="number" step="1" min="40" max="180" id="pulseInput" class="input-field num" placeholder="68" onchange="syncTodayFromInputs()">
+        </div>
+
+        <div class="input-row">
+          <label for="bpInput">Давление (например 120/80)</label>
+          <input type="text" id="bpInput" class="input-field num" placeholder="120/80" onchange="syncTodayFromInputs()">
+        </div>
+
+        <div class="input-row">
+          <label for="stepsInput">Шаги / Прогулка (шагов)</label>
+          <input type="number" step="500" min="0" max="50000" id="stepsInput" class="input-field num" placeholder="6000" onchange="syncTodayFromInputs()">
+        </div>
+      </div>
+
+      <div class="input-group" style="margin-top:8px;">
+        <label for="healthNoteInput">Заметка по состоянию (спина, глаза, энергия, питание)</label>
+        <input type="text" id="healthNoteInput" class="input-field" placeholder="Например: После смены размял поясницу, без фастфуда, выпил норму воды" onchange="syncTodayFromInputs()">
+      </div>
+    </section>
+
+    <!-- 6. ИСТОРИЯ ДНЕЙ (ПОСЛЕДНИЕ 14 ЗАПИСЕЙ) -->
+    <section class="card">
+      <div class="section-title">
+        <span>📊 Журнал восстановления (последние 14 дней)</span>
+        <span style="font-size:0.75rem; color:var(--text-muted);" id="avgSleepSummary">Средний сон: —</span>
+      </div>
+
+      <div id="healthHistoryContainer"></div>
+    </section>
+
+  </main>
+
+  <script>
+    const HEALTH_PATH = "man_health";
+
+    const DEFAULT_MOBILITY = [
+      { id: "mob_1", text: "Разминка шеи и плечевого пояса (2 мин)", checked: false },
+      { id: "mob_2", text: "Растяжка поясницы и грудного отдела после руля", checked: false },
+      { id: "mob_3", text: "Приём пищи без фастфуда и сладкой газировки", checked: false },
+      { id: "mob_4", text: "Прогулка на свежем воздухе 15+ минут", checked: false }
+    ];
+
+    function createEmptyDay(dateStr) {
+      return {
+        date: dateStr,
+        bedTime: "01:30",
+        wakeTime: "08:30",
+        sleepHours: 7.0,
+        sleepQuality: 4,
+        waterMl: 0,
+        pushups: 0,
+        squats: 0,
+        pullups: 0,
+        plank: 0,
+        weight: "",
+        pulse: "",
+        bp: "",
+        steps: 0,
+        note: "",
+        mobility: JSON.parse(JSON.stringify(DEFAULT_MOBILITY)),
+        updatedAt: Date.now()
+      };
+    }
+
+    let healthState = {
+      waterGoal: 2500,
+      sleepGoal: 7.0,
+      days: {}
+    };
+
+    let stretchSec = 300;
+    let stretchInterval = null;
+
+    function getTodayRecord() {
+      const today = getTodayStr();
+      if (!healthState.days || typeof healthState.days !== "object") {
+        healthState.days = {};
+      }
+      if (!healthState.days[today]) {
+        healthState.days[today] = createEmptyDay(today);
+      }
+      if (!Array.isArray(healthState.days[today].mobility)) {
+        healthState.days[today].mobility = JSON.parse(JSON.stringify(DEFAULT_MOBILITY));
+      }
+      return healthState.days[today];
+    }
+
+    function saveHealthState(toastText = null) {
+      CoreDB.save(HEALTH_PATH, healthState).then(() => {
+        if (toastText) coreToast(toastText, "gold");
+      });
+    }
+
+    function computeReadiness(day) {
+      const sleepGoal = Number(healthState.sleepGoal) || 7.0;
+      const waterGoal = Number(healthState.waterGoal) || 2500;
+
+      const sleepRatio = Math.min((Number(day.sleepHours) || 0) / sleepGoal, 1);
+      const qualityRatio = (Number(day.sleepQuality) || 3) / 5;
+      const waterRatio = Math.min((Number(day.waterMl) || 0) / waterGoal, 1);
+
+      const reps = (Number(day.pushups) || 0) + (Number(day.squats) || 0) + (Number(day.pullups) || 0) + Math.floor((Number(day.plank) || 0) / 10);
+      const workoutRatio = Math.min(reps / 40, 1);
+
+      const mobList = Array.isArray(day.mobility) ? day.mobility : [];
+      const mobDone = mobList.filter((m) => m.checked).length;
+      const mobRatio = mobList.length ? mobDone / mobList.length : 0;
+
+      const score = Math.round(
+        sleepRatio * 35 +
+        qualityRatio * 15 +
+        waterRatio * 20 +
+        workoutRatio * 15 +
+        mobRatio * 15
+      );
+      return Math.max(0, Math.min(100, score));
+    }
+
+    function calcSleepFromTimes() {
+      const bed = document.getElementById("bedTimeInput").value;
+      const wake = document.getElementById("wakeTimeInput").value;
+      if (!bed || !wake) return;
+
+      const [bh, bm] = bed.split(":").map(Number);
+      const [wh, wm] = wake.split(":").map(Number);
+      let startMin = bh * 60 + bm;
+      let endMin = wh * 60 + wm;
+      if (endMin <= startMin) {
+        endMin += 24 * 60;
+      }
+      const diffHours = Number(((endMin - startMin) / 60).toFixed(1));
+      document.getElementById("sleepHoursInput").value = diffHours;
+      syncTodayFromInputs();
+    }
+
+    function setSleepQuality(q) {
+      const day = getTodayRecord();
+      day.sleepQuality = q;
+      day.updatedAt = Date.now();
+      saveHealthState();
+      renderAll();
+    }
+
+    function updateWaterGoal() {
+      const val = Math.max(1000, Number(document.getElementById("waterGoalInput").value) || 2500);
+      healthState.waterGoal = val;
+      saveHealthState("Норма воды обновлена.");
+      renderAll();
+    }
+
+    function addWater(ml) {
+      const day = getTodayRecord();
+      const prev = Number(day.waterMl) || 0;
+      day.waterMl = prev + ml;
+      day.updatedAt = Date.now();
+
+      const goal = Number(healthState.waterGoal) || 2500;
+      if (prev < goal && day.waterMl >= goal) {
+        triggerVictoryFlash();
+        coreToast("Дневная норма воды выполнена!", "gold");
+      } else {
+        coreToast(`+${ml} мл воды зафиксировано.`, "gold");
+      }
+
+      saveHealthState();
+      renderAll();
+    }
+
+    function resetWater() {
+      const day = getTodayRecord();
+      day.waterMl = 0;
+      day.updatedAt = Date.now();
+      saveHealthState("Счётчик воды обнулён.");
+      renderAll();
+    }
+
+    function addExercise(field, amount) {
+      const day = getTodayRecord();
+      day[field] = (Number(day[field]) || 0) + amount;
+      day.updatedAt = Date.now();
+      saveHealthState(`+${amount} зафиксировано.`);
+      renderAll();
+    }
+
+    function resetWorkoutCounters() {
+      const day = getTodayRecord();
+      day.pushups = 0;
+      day.squats = 0;
+      day.pullups = 0;
+      day.plank = 0;
+      day.updatedAt = Date.now();
+      saveHealthState("Счётчики упражнений сброшены.");
+      renderAll();
+    }
+
+    function toggleMobility(id) {
+      const day = getTodayRecord();
+      const target = day.mobility.find((m) => m.id === id);
+      if (!target) return;
+      target.checked = !target.checked;
+      day.updatedAt = Date.now();
+      saveHealthState();
+      renderAll();
+    }
+
+    function startStretchTimer() {
+      if (stretchInterval) return;
+      stretchInterval = setInterval(() => {
+        if (stretchSec <= 0) {
+          clearInterval(stretchInterval);
+          stretchInterval = null;
+          stretchSec = 300;
+          triggerVictoryFlash();
+          coreToast("5-минутная разминка завершена. Спина разгружена!", "gold");
+          updateStretchDisplay();
+          return;
+        }
+        stretchSec -= 1;
+        updateStretchDisplay();
+      }, 1000);
+      coreToast("Таймер разминки запущен.", "gold");
+    }
+
+    function resetStretchTimer() {
+      clearInterval(stretchInterval);
+      stretchInterval = null;
+      stretchSec = 300;
+      updateStretchDisplay();
+    }
+
+    function updateStretchDisplay() {
+      const m = String(Math.floor(stretchSec / 60)).padStart(2, "0");
+      const s = String(stretchSec % 60).padStart(2, "0");
+      document.getElementById("stretchTimerDisplay").textContent = `${m}:${s}`;
+    }
+
+    function syncTodayFromInputs() {
+      const day = getTodayRecord();
+      day.bedTime = document.getElementById("bedTimeInput").value || "01:30";
+      day.wakeTime = document.getElementById("wakeTimeInput").value || "08:30";
+      day.sleepHours = Math.max(0, Number(document.getElementById("sleepHoursInput").value) || 0);
+      day.weight = document.getElementById("weightInput").value.trim();
+      day.pulse = document.getElementById("pulseInput").value.trim();
+      day.bp = document.getElementById("bpInput").value.trim();
+      day.steps = Math.max(0, Number(document.getElementById("stepsInput").value) || 0);
+      day.note = document.getElementById("healthNoteInput").value.trim();
+      day.updatedAt = Date.now();
+      saveHealthState();
+      renderKPIsAndBanner();
+      renderHistory();
+    }
+
+    function saveDailySnapshot(withToast = false) {
+      syncTodayFromInputs();
+      const day = getTodayRecord();
+      const score = computeReadiness(day);
+      if (withToast) {
+        if (score >= 85) {
+          triggerVictoryFlash();
+          logVictory(
+            `Железный режим здоровья (${day.date})`,
+            `Индекс ресурса ${score}%, сон ${day.sleepHours} ч, вода ${day.waterMl} мл.`,
+            "health",
+            false
+          );
+        }
+        coreToast(`День сохранён. Индекс ресурса: ${score}%`, "gold");
+      }
+      renderAll();
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderKPIsAndBanner() {
+      const day = getTodayRecord();
+      const score = computeReadiness(day);
+      const waterGoal = Number(healthState.waterGoal) || 2500;
+      const sleepGoal = Number(healthState.sleepGoal) || 7.0;
+
+      document.getElementById("currentDateLabel").textContent = day.date;
+      document.getElementById("navReadinessBadge").textContent = `${score}% РЕСУРС`;
+      document.getElementById("readinessBigPct").textContent = `${score}%`;
+
+      const banner = document.getElementById("readinessBanner");
+      const headline = document.getElementById("readinessHeadline");
+      const advice = document.getElementById("readinessAdvice");
+      const bigPct = document.getElementById("readinessBigPct");
+
+      banner.classList.remove("warn", "danger");
+      if (score >= 75) {
+        bigPct.style.color = "var(--green)";
+        headline.textContent = "Высокая боевая готовность";
+        advice.textContent = "База в норме: сон, вода и разминка поддерживают выносливость на смене.";
+      } else if (score >= 45) {
+        banner.classList.add("warn");
+        bigPct.style.color = "var(--gold)";
+        headline.textContent = "Средний запас энергии";
+        advice.textContent = "Добей норму воды и сделай 5-минутную разминку спины перед выездом.";
+      } else {
+        banner.classList.add("danger");
+        bigPct.style.color = "var(--red)";
+        headline.textContent = "Дефицит восстановления";
+        advice.textContent = "Недосып или нехватка воды. Закрой базовый минимум, чтобы не выгореть.";
+      }
+
+      document.getElementById("kpiSleepHours").textContent = `${(Number(day.sleepHours) || 0).toFixed(1)} ч`;
+      document.getElementById("kpiWaterMl").textContent = `${Number(day.waterMl) || 0} мл`;
+
+      const totalWork = (Number(day.pushups) || 0) + (Number(day.squats) || 0) + (Number(day.pullups) || 0);
+      document.getElementById("kpiWorkoutTotal").textContent = `${totalWork} повт.`;
+      document.getElementById("kpiWeightVal").textContent = day.weight ? `${day.weight} кг` : "— кг";
+
+      const sleepPct = Math.min(Math.round(((Number(day.sleepHours) || 0) / sleepGoal) * 100), 100);
+      document.getElementById("sleepProgressBar").style.width = `${sleepPct}%`;
+
+      const waterPct = Math.min(Math.round(((Number(day.waterMl) || 0) / waterGoal) * 100), 100);
+      document.getElementById("waterPctLabel").textContent = `${waterPct}%`;
+      document.getElementById("waterFractionText").textContent = `${Number(day.waterMl) || 0} / ${waterGoal} мл`;
+      document.getElementById("waterProgressBar").style.width = `${waterPct}%`;
+
+      document.getElementById("exPushups").textContent = Number(day.pushups) || 0;
+      document.getElementById("exSquats").textContent = Number(day.squats) || 0;
+      document.getElementById("exPullups").textContent = Number(day.pullups) || 0;
+      document.getElementById("exPlank").textContent = Number(day.plank) || 0;
+    }
+
+    function renderInputs() {
+      const day = getTodayRecord();
+      document.getElementById("bedTimeInput").value = day.bedTime || "01:30";
+      document.getElementById("wakeTimeInput").value = day.wakeTime || "08:30";
+      document.getElementById("sleepHoursInput").value = day.sleepHours ?? 7.0;
+      document.getElementById("waterGoalInput").value = healthState.waterGoal || 2500;
+      document.getElementById("weightInput").value = day.weight || "";
+      document.getElementById("pulseInput").value = day.pulse || "";
+      document.getElementById("bpInput").value = day.bp || "";
+      document.getElementById("stepsInput").value = day.steps || "";
+      document.getElementById("healthNoteInput").value = day.note || "";
+
+      document.querySelectorAll("#sleepQualityPills .rate-btn").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.q) === Number(day.sleepQuality || 4));
+      });
+    }
+
+    function renderMobility() {
+      const day = getTodayRecord();
+      const list = day.mobility || [];
+      const doneCount = list.filter((m) => m.checked).length;
+      document.getElementById("mobilityDoneBadge").textContent = `${doneCount} / ${list.length}`;
+
+      document.getElementById("mobilityListContainer").innerHTML = list.map((m) => `
+        <div class="mob-row">
+          <label class="mob-label ${m.checked ? "checked" : ""}">
+            <input type="checkbox" ${m.checked ? "checked" : ""} onchange="toggleMobility('${m.id}')">
+            <span>${escapeHtml(m.text)}</span>
+          </label>
+        </div>
+      `).join("");
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("healthHistoryContainer");
+      const entries = Object.values(healthState.days || {})
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+        .slice(0, 14);
+
+      if (!entries.length) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.88rem;">Записей пока нет.</div>`;
+        return;
+      }
+
+      const avgSleep = entries.reduce((s, d) => s + (Number(d.sleepHours) || 0), 0) / entries.length;
+      document.getElementById("avgSleepSummary").textContent = `Средний сон: ${avgSleep.toFixed(1)} ч`;
+
+      container.innerHTML = entries.map((d) => {
+        const sc = computeReadiness(d);
+        const badgeColor = sc >= 75 ? "var(--green)" : sc >= 45 ? "var(--gold)" : "var(--red)";
+        const reps = (Number(d.pushups) || 0) + (Number(d.squats) || 0) + (Number(d.pullups) || 0);
+        return `
+          <div class="history-item">
+            <div>
+              <div style="font-weight:800; font-size:0.95rem;">
+                ${escapeHtml(d.date)}
+                ${d.weight ? `<span style="color:var(--gold); font-family:var(--mono); margin-left:8px;">${escapeHtml(d.weight)} кг</span>` : ""}
+              </div>
+              <div class="history-metrics">
+                <span>Сон: <strong>${Number(d.sleepHours || 0).toFixed(1)} ч</strong> (${d.sleepQuality || 4}/5)</span>
+                <span>Вода: <strong>${Number(d.waterMl || 0)} мл</strong></span>
+                <span>База: <strong>${reps} повт.</strong></span>
+                ${d.bp ? `<span>АД: <strong>${escapeHtml(d.bp)}</strong></span>` : ""}
+              </div>
+              ${d.note ? `<div style="font-size:0.82rem; color:#bbb; margin-top:4px;">${escapeHtml(d.note)}</div>` : ""}
+            </div>
+            <div style="font-family:var(--mono); font-weight:900; font-size:1.15rem; color:${badgeColor};">
+              ${sc}%
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderAll() {
+      renderInputs();
+      renderMobility();
+      renderKPIsAndBanner();
+      renderHistory();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      updateStretchDisplay();
+      getTodayRecord();
+      renderAll();
+
+      CoreDB.watch(HEALTH_PATH, (remoteData) => {
+        if (remoteData && typeof remoteData === "object") {
+          healthState = {
+            waterGoal: Number(remoteData.waterGoal) || 2500,
+            sleepGoal: Number(remoteData.sleepGoal) || 7.0,
+            days: remoteData.days && typeof remoteData.days === "object" ? remoteData.days : {}
+          };
+          getTodayRecord();
+          renderAll();
+        }
+      }, healthState);
+    });
+  </script>
+</body>
+</html>
