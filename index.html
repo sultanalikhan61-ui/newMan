@@ -2,9 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>THE CORE | Главная</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Command Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -12,275 +12,346 @@
 
   <style>
     /* =========================================
-       1. ПЕРЕМЕННЫЕ И СБРОС
+       1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
        ========================================= */
     :root {
       --bg-base: #030303;
       --bg-surface: #0f0f0f;
       --bg-elevated: #1a1a1a;
+      --border: #222;
       --text-main: #ffffff;
-      --text-muted: #888888;
-      --accent-red: #d90429;
-      --accent-red-hover: #ef233c;
-      --accent-gold: #d4af37;
-      --accent-green: #2ed573;
-      --border-color: #222222;
+      --text-muted: #888;
+      
+      --red: #d90429;
+      --red-hover: #ef233c;
+      --gold: #d4af37;
+      --green: #2ed573;
+      --blue: #1e90ff;
+      
       --font-main: 'Inter', sans-serif;
       --font-display: 'Playfair Display', serif;
       --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
     body {
       background-color: var(--bg-base);
       color: var(--text-main);
       font-family: var(--font-main);
-      line-height: 1.6;
+      line-height: 1.5;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
       overflow-x: hidden;
       background-image: 
-        radial-gradient(circle at 15% 50%, rgba(217, 4, 41, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(212, 175, 55, 0.05), transparent 25%);
+        radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.1), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.05), transparent 30%);
     }
 
-    /* =========================================
-       2. АНИМИРОВАННЫЙ ФОН (ЧАСТИЦЫ)
-       ========================================= */
-    .bg-particles {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: -1;
-    }
-    .particle {
-      position: absolute;
-      background: rgba(217, 4, 41, 0.3);
-      border-radius: 50%;
-      animation: floatUp 10s infinite linear;
-    }
-    @keyframes floatUp {
-      0% { transform: translateY(100vh) scale(0); opacity: 0; }
-      50% { opacity: 1; }
-      100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
-    }
+    /* Скроллбар */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
 
     /* =========================================
-       3. ГЛАВНЫЙ ЭКРАН (HERO)
+       2. ШАПКА (TOP BAR)
        ========================================= */
-    .hero {
-      flex: 1;
+    .top-bar {
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      text-align: center;
-      padding: 40px 20px;
-      position: relative;
+      padding: 15px 25px;
+      background: rgba(3, 3, 3, 0.85);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
-    .live-clock {
-      font-size: 1rem;
-      font-weight: 800;
-      color: var(--accent-gold);
+    .brand {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 900;
       letter-spacing: 3px;
       text-transform: uppercase;
-      margin-bottom: 30px;
-      padding: 8px 20px;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 20px;
-      background: rgba(212, 175, 55, 0.05);
-      backdrop-filter: blur(5px);
-      animation: pulseGold 3s infinite;
     }
+    .brand span { color: var(--red); text-shadow: 0 0 15px rgba(217,4,41,0.6); }
 
-    @keyframes pulseGold {
-      0%, 100% { box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
-      50% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
-    }
-
-    .title {
-      font-family: var(--font-display);
-      font-size: clamp(3rem, 8vw, 6rem);
-      font-weight: 900;
-      line-height: 1.1;
-      text-transform: uppercase;
-      letter-spacing: 5px;
-      margin-bottom: 20px;
-      text-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
-    .title span { color: var(--accent-red); text-shadow: 0 0 40px rgba(217, 4, 41, 0.5); }
-
-    .subtitle {
-      font-size: 1.2rem;
-      color: var(--text-muted);
-      max-width: 600px;
-      margin-bottom: 50px;
-      font-weight: 500;
+    .clock {
+      font-family: var(--font-mono, 'Courier New', monospace);
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--gold);
+      background: var(--bg-surface);
+      padding: 8px 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
     }
 
     /* =========================================
-       4. СТАТЫ НА ГЛАВНОЙ (LIVE)
+       3. МОТИВАЦИЯ (HERO SECTION)
        ========================================= */
-    .live-stats-container {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 50px;
-      flex-wrap: wrap;
-      justify-content: center;
+    .hero {
+      padding: 40px 20px;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .quote-box {
+      background: linear-gradient(135deg, rgba(217, 4, 41, 0.1) 0%, rgba(0,0,0,0) 100%);
+      border: 1px solid rgba(217, 4, 41, 0.3);
+      border-left: 4px solid var(--red);
+      padding: 30px;
+      border-radius: 0 16px 16px 0;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .quote-text {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-style: italic;
+      color: var(--text-main);
+      margin-bottom: 15px;
+      line-height: 1.4;
+    }
+    .quote-author {
+      font-size: 0.9rem;
+      color: var(--red);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* =========================================
+       4. СТАТУС (LIVE ПАНЕЛЬ)
+       ========================================= */
+    .status-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      max-width: 1000px;
+      margin: 0 auto 40px auto;
+      padding: 0 20px;
     }
     .stat-box {
-      background: rgba(15, 15, 15, 0.8);
-      border: 1px solid var(--border-color);
-      padding: 20px 30px;
-      border-radius: 16px;
-      min-width: 200px;
-      backdrop-filter: blur(10px);
-      transition: var(--transition);
-    }
-    .stat-box:hover { border-color: var(--accent-red); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(217, 4, 41, 0.2); }
-    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 5px; }
-    .stat-value { font-size: 2rem; font-weight: 900; color: var(--text-main); }
-    .stat-value.red { color: var(--accent-red); }
-    .stat-value.green { color: var(--accent-green); }
-    .stat-value.gold { color: var(--accent-gold); }
-
-    /* =========================================
-       5. КНОПКА ВХОДА
-       ========================================= */
-    .btn-enter {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-      background: var(--accent-red);
-      color: #fff;
-      text-decoration: none;
-      padding: 20px 50px;
-      font-size: 1.1rem;
-      font-weight: 900;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      border: 2px solid var(--accent-red);
-      box-shadow: 0 10px 40px rgba(217, 4, 41, 0.4);
+      padding: 20px;
+      text-align: center;
       transition: var(--transition);
+      position: relative;
+      overflow: hidden;
     }
-    .btn-enter:hover {
-      background: transparent;
-      color: var(--accent-red);
-      box-shadow: 0 0 50px rgba(217, 4, 41, 0.8);
-      transform: translateY(-5px) scale(1.02);
-    }
-    .btn-enter svg { width: 24px; height: 24px; fill: currentColor; }
+    .stat-box:hover { border-color: var(--red); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(217,4,41,0.1); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700; }
+    .stat-value { font-size: 2rem; font-weight: 900; font-family: var(--font-mono, monospace); }
+    .stat-value.red { color: var(--red); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.gold { color: var(--gold); }
+    
+    .stat-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
 
     /* =========================================
-       6. ПРАВИЛА (МАНИФЕСТ)
+       5. СЕТКА МОДУЛЕЙ (GRID)
        ========================================= */
-    .rules-grid {
+    .modules-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 40px 20px;
-      width: 100%;
+      padding: 0 20px 60px 20px;
     }
-    .rule-card {
+
+    .module-card {
       background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      padding: 30px;
+      border: 1px solid var(--border);
       border-radius: 16px;
+      padding: 25px;
+      text-decoration: none;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
       position: relative;
       overflow: hidden;
+      cursor: pointer;
     }
-    .rule-card::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
-      opacity: 0.5;
+
+    .module-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+      background: var(--border); transition: var(--transition);
     }
-    .rule-num { font-size: 3rem; font-weight: 900; color: rgba(255,255,255,0.05); position: absolute; top: 10px; right: 20px; font-family: var(--font-display); }
-    .rule-title { font-size: 1.2rem; font-weight: 800; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-    .rule-text { color: var(--text-muted); font-size: 0.95rem; }
+    .module-card:hover {
+      background: var(--bg-elevated);
+      border-color: var(--red);
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+    }
+    .module-card:hover::before { background: var(--red); box-shadow: 0 0 15px var(--red); }
+
+    .mod-icon { font-size: 2.5rem; margin-bottom: 15px; }
+    .mod-title { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .mod-desc { font-size: 0.9rem; color: var(--text-muted); flex: 1; line-height: 1.5; }
+    
+    /* Подсветка специфических карточек */
+    .module-card.finance::before { background: var(--green); }
+    .module-card.finance:hover { border-color: var(--green); }
+    .module-card.finance:hover::before { background: var(--green); box-shadow: 0 0 15px var(--green); }
+
+    .module-card.diary::before { background: var(--gold); }
+    .module-card.diary:hover { border-color: var(--gold); }
+    .module-card.diary:hover::before { background: var(--gold); box-shadow: 0 0 15px var(--gold); }
+
+    .module-card.strategy::before { background: var(--blue); }
+    .module-card.strategy:hover { border-color: var(--blue); }
+    .module-card.strategy:hover::before { background: var(--blue); box-shadow: 0 0 15px var(--blue); }
+
+    .module-card.health::before { background: #ff9ff3; }
+    .module-card.health:hover { border-color: #ff9ff3; }
+    .module-card.health:hover::before { background: #ff9ff3; box-shadow: 0 0 15px #ff9ff3; }
 
     /* =========================================
-       7. ФУТЕР
+       6. ФУТЕР
        ========================================= */
-    footer {
+    .footer {
       text-align: center;
       padding: 30px;
-      color: #444;
-      font-size: 0.85rem;
-      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
       background: var(--bg-surface);
       letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Анимации */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse-dot {
+      display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%;
+      margin-right: 5px; animation: pulse 2s infinite;
     }
   </style>
 </head>
 <body>
 
-  <div class="bg-particles" id="particles"></div>
+  <header class="top-bar">
+    <div class="brand">THE <span>CORE</span></div>
+    <div class="clock" id="liveClock">--:--:--</div>
+  </header>
 
   <section class="hero">
-    <div class="live-clock" id="liveClock">Загрузка времени...</div>
+    <div class="quote-box">
+      <div class="quote-text" id="dailyQuote">Загрузка директивы...</div>
+      <div class="quote-author">— Твой внутренний стержень</div>
+    </div>
+  </section>
+
+  <section class="status-panel">
+    <div class="stat-box">
+      <div class="stat-label">Общий долг</div>
+      <div class="stat-value red" id="widgetDebt">0 тг</div>
+      <div class="stat-desc" id="widgetDebtDesc">Банк + Друзья</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Дисциплина (Стрик)</div>
+      <div class="stat-value green" id="widgetStreak">0</div>
+      <div class="stat-desc">Дней подряд</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">До дедлайна</div>
+      <div class="stat-value gold" id="widgetTimer">0 дн.</div>
+      <div class="stat-desc">До 16 Декабря</div>
+    </div>
+  </section>
+
+  <section class="modules-grid">
     
-    <h1 class="title">ТВОЙ <span>ТЕРМИНАЛ</span></h1>
-    <p class="subtitle">Никаких отговорок. Никаких соплей. Только холодный расчет, дисциплина и построение твоей империи с нуля.</p>
-
-    <!-- Живые статы из Firebase -->
-    <div class="live-stats-container">
-      <div class="stat-box">
-        <div class="stat-label">Общий долг</div>
-        <div class="stat-value red" id="liveStatDebt">0 тг</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Дней дисциплины</div>
-        <div class="stat-value green" id="liveStatStreak">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Записей в дневнике</div>
-        <div class="stat-value gold" id="liveStatDiary">0</div>
-      </div>
-    </div>
-
-    <a href="core.html" class="btn-enter">
-      ВОЙТИ В ШТАБ
-      <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+    <!-- ФИНАНСЫ -->
+    <a href="finance.html" class="module-card finance">
+      <div class="mod-icon">💰</div>
+      <div class="mod-title">Финансовый Штаб</div>
+      <div class="mod-desc">Учет смен, детализация расходов, баланс утро/вечер и график доходов.</div>
     </a>
+
+    <!-- ДОЛГИ -->
+    <a href="debts.html" class="module-card">
+      <div class="mod-icon">💀</div>
+      <div class="mod-title">Уничтожитель Долгов</div>
+      <div class="mod-desc">Кредиты, банки, долги друзьям. Частичное погашение и график платежей.</div>
+    </a>
+
+    <!-- ДНЕВНИК -->
+    <a href="diary.html" class="module-card diary">
+      <div class="mod-icon">📖</div>
+      <div class="mod-title">Дневник</div>
+      <div class="mod-desc">Твой личный архив. Стикеры, ИИ-анализ состояния и хроника твоей жизни.</div>
+    </a>
+
+    <!-- ДИСЦИПЛИНА -->
+    <a href="habits.html" class="module-card">
+      <div class="mod-icon">⚔️</div>
+      <div class="mod-title">Стержень</div>
+      <div class="mod-desc">Настройка привычек под свой график. Умные стрики, которые не сгорают из-за ночных смен.</div>
+    </a>
+
+    <!-- ЗДОРОВЬЕ -->
+    <a href="health.html" class="module-card health">
+      <div class="mod-icon">🫀</div>
+      <div class="mod-title">Здоровье</div>
+      <div class="mod-desc">Сон, вода, физическая форма. Контроль ресурсов твоего организма.</div>
+    </a>
+
+    <!-- СТРАТЕГИЯ -->
+    <a href="strategy.html" class="module-card strategy">
+      <div class="mod-icon">🏠</div>
+      <div class="mod-title">Стратегия 2031</div>
+      <div class="mod-desc">Калькулятор ипотеки (Алматы), покупка авто, долгосрочные финансовые цели.</div>
+    </a>
+
+    <!-- БИЗНЕС -->
+    <a href="business.html" class="module-card">
+      <div class="mod-icon">💼</div>
+      <div class="mod-title">Бизнес-Инкубатор</div>
+      <div class="mod-desc">Просчет твоих идей. Открытие автомойки, таксопарка. Точки безубыточности.</div>
+    </a>
+
+    <!-- АНАЛИТИКА -->
+    <a href="analytics.html" class="module-card">
+      <div class="mod-icon">📊</div>
+      <div class="mod-title">Big Data</div>
+      <div class="mod-desc">Глобальные графики. Как твой сон и настроение влияют на твой доход.</div>
+    </a>
+
+    <!-- ЖУРНАЛ ИЗМЕНЕНИЙ -->
+    <a href="changelog.html" class="module-card">
+      <div class="mod-icon">📜</div>
+      <div class="mod-title">Журнал Трансформации</div>
+      <div class="mod-desc">Логи твоих побед. Закрытые долги, купленные вещи, пройденные этапы.</div>
+    </a>
+
+    <!-- НАСТРОЙКИ -->
+    <a href="settings.html" class="module-card">
+      <div class="mod-icon">⚙️</div>
+      <div class="mod-title">Настройки</div>
+      <div class="mod-desc">Базовые параметры, синхронизация, экспорт данных.</div>
+    </a>
+
   </section>
 
-  <section class="rules-grid">
-    <div class="rule-card">
-      <div class="rule-num">01</div>
-      <div class="rule-title">Мое счастье — приоритет</div>
-      <div class="rule-text">Я не растворяюсь в других людях. Я строю себя. Моя жизнь — это моя ответственность.</div>
-    </div>
-    <div class="rule-card">
-      <div class="rule-num">02</div>
-      <div class="rule-title">Дисциплина > Мотивация</div>
-      <div class="rule-text">Я делаю то, что нужно, даже когда нет сил. Каждый час в такси — это кирпич в фундамент моего будущего.</div>
-    </div>
-    <div class="rule-card">
-      <div class="rule-num">03</div>
-      <div class="rule-title">Финансовая крепость</div>
-      <div class="rule-text">Я закрываю долги. Я покупаю новую машину. Я иду к своей квартире к 2031 году. Точка.</div>
-    </div>
-    <div class="rule-card">
-      <div class="rule-num">04</div>
-      <div class="rule-title">Контроль над эмоциями</div>
-      <div class="rule-text">Никто и ничто не собьет меня с пути. Её молчание или слова не разрушат мой день. Я — скала.</div>
-    </div>
-  </section>
-
-  <footer>
-    THE CORE SYSTEM © 2026. Designed for Sultan. All rights reserved.
+  <footer class="footer">
+    <span class="pulse-dot"></span> THE CORE SYSTEM ACTIVE © 2026
   </footer>
 
   <script>
     /* =========================================
-       FIREBASE CONFIG (Главная страница)
+       FIREBASE CONFIG
        ========================================= */
     const firebaseConfig = {
       apiKey: "AIzaSyDrPu0bv13jvnju8JJyHkgeRQcf66fDtlk",
@@ -291,62 +362,82 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- 1. ЖИВЫЕ ЧАСЫ ---
+    /* =========================================
+       1. ЖИВЫЕ ЧАСЫ
+       ========================================= */
     function updateClock() {
       const now = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-      document.getElementById('liveClock').innerText = now.toLocaleDateString('ru-RU', options);
+      const timeString = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('liveClock').innerText = timeString;
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // --- 2. ПОДТЯГИВАЕМ СТАТЫ ИЗ БАЗЫ ---
-    // Слушаем ветку финансов
-    db.ref('man_finance').on('value', (snap) => {
-      const data = snap.val();
+    /* =========================================
+       2. МОТИВАЦИЯ ДНЯ (ГЕНЕРАТОР)
+       ========================================= */
+    const directives = [
+      "Дисциплина — это выбор между тем, чего ты хочешь сейчас, и тем, чего ты хочешь больше всего.",
+      "Твоя боль — это топливо. Не трать его на слезы.",
+      "Она прилетит 16-го. Кем она тебя увидит? Слабым или мужчиной, который построил себя?",
+      "Деньги не пахнут. Они пахнут свободой. Каждый заказ приближает тебя к новой машине.",
+      "Пока ты ждешь ее сообщения, кто-то зарабатывает твои деньги. Работай.",
+      "Ты не имеешь права сдаваться. Ты — мужчина. На тебе ответственность за твою жизнь.",
+      "Сделай это ради себя. Не ради нее. Стань тем, кем ты хочешь быть.",
+      "Твоя старая машина сгнила. Твоя старая жизнь тоже. Пора строить новую.",
+      "Каждый час в такси — это кирпич в фундамент твоей империи. Не жалей себя.",
+      "Если ты сегодня не сделаешь шаг к цели, завтра ты будешь там же, где и вчера."
+    ];
+    
+    function generateDailyQuote() {
+      const randomIndex = Math.floor(Math.random() * directives.length);
+      document.getElementById('dailyQuote').innerText = directives[randomIndex];
+    }
+    generateDailyQuote();
+
+    /* =========================================
+       3. ПОДТЯГИВАЕМ ЖИВЫЕ ДАННЫЕ ИЗ БАЗЫ
+       ========================================= */
+    
+    // Долги (Банк + Друзья)
+    db.ref('man_finance').on('value', (snapshot) => {
+      const data = snapshot.val();
       if (data) {
         let totalDebt = data.bankDebt || 0;
         if (data.debts && data.debts.length > 0) {
-          data.debts.forEach(d => totalDebt += d.sum);
+          data.debts.forEach(d => {
+            totalDebt += (d.total - (d.paid || 0)); // Учитываем частичное погашение
+          });
         }
-        document.getElementById('liveStatDebt').innerText = totalDebt.toLocaleString() + ' тг';
+        document.getElementById('widgetDebt').innerText = totalDebt.toLocaleString() + ' тг';
       }
     });
 
-    // Слушаем ветку дисциплины
-    db.ref('man_habits/streak').on('value', (snap) => {
-      const data = snap.val();
+    // Стрик (Дисциплина)
+    db.ref('man_habits/streak').on('value', (snapshot) => {
+      const data = snapshot.val();
       if (data && data.count !== undefined) {
-        document.getElementById('liveStatStreak').innerText = data.count;
+        document.getElementById('widgetStreak').innerText = data.count;
       }
     });
 
-    // Слушаем ветку дневника
-    db.ref('man_diary').on('value', (snap) => {
-      const data = snap.val();
-      if (data) {
-        document.getElementById('liveStatDiary').innerText = data.length;
-      }
-    });
+    /* =========================================
+       4. ТАЙМЕР ДО 16 ДЕКАБРЯ
+       ========================================= */
+    function updateCountdown() {
+      const targetDate = new Date("2026-12-16T00:00:00").getTime();
+      const now = new Date().getTime();
+      const distance = targetDate - now;
 
-    // --- 3. ГЕНЕРАТОР ЧАСТИЦ НА ФОНЕ ---
-    function createParticles() {
-      const container = document.getElementById('particles');
-      const particleCount = 20;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        const size = Math.random() * 8 + 2;
-        p.style.width = size + 'px';
-        p.style.height = size + 'px';
-        p.style.left = Math.random() * 100 + 'vw';
-        p.style.animationDuration = (Math.random() * 10 + 10) + 's';
-        p.style.animationDelay = (Math.random() * 10) + 's';
-        container.appendChild(p);
+      if (distance < 0) {
+        document.getElementById('widgetTimer').innerText = "ВРЕМЯ ВЫШЛО";
+        return;
       }
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      document.getElementById('widgetTimer').innerText = `${days} дн.`;
     }
-    createParticles();
+    setInterval(updateCountdown, 1000 * 60 * 60); // Обновляем раз в час
+    updateCountdown();
 
   </script>
 </body>

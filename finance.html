@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Финансы</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    /* =========================================
+       БАЗА СТИЛЕЙ (Тёмная тема)
+       ========================================= */
+    :root {
+      --bg: #050505; --surface: #121212; --elevated: #1e1e1e; --border: #333;
+      --text: #fff; --text-muted: #888; 
+      --red: #d90429; --gold: #d4af37; --green: #2ed573; --blue: #1e90ff;
+      --font: 'Inter', sans-serif; --mono: 'Montserrat', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; min-height: 100vh; }
+    
+    /* Навигация сверху */
+    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5,5,5,0.9); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+    .back-btn { color: var(--gold); text-decoration: none; font-weight: 800; font-size: 1.2rem; transition: 0.2s; }
+    .back-btn:hover { color: #fff; }
+    .page-title { font-size: 1.2rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+    
+    /* Навигация вкладок */
+    .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 10px; }
+    .tab-btn { flex: 1; padding: 15px 0; background: none; border: none; color: var(--text-muted); font-weight: 800; font-size: 0.85rem; text-transform: uppercase; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; }
+    .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .content { padding: 20px; max-width: 1200px; margin: 0 auto; padding-bottom: 100px; }
+    .pane { display: none; animation: fade 0.3s ease; } .pane.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* UI */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; position: relative; }
+    .card-header { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; border-bottom: 1px dashed var(--border); padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
+
+    .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .input-group label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
+    .input-field { background: var(--elevated); border: 1px solid var(--border); color: var(--text); padding: 12px 15px; border-radius: 8px; width: 150px; text-align: right; font-family: var(--mono); font-weight: 800; font-size: 1rem; }
+    .input-field:focus { outline: none; border-color: var(--red); }
+    
+    .btn { background: var(--elevated); color: var(--text); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.85rem; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn:hover { background: var(--border); }
+    .btn-block { width: 100%; }
+    .btn-red { background: var(--red); border-color: var(--red); color: #fff; }
+    .btn-red:hover { background: #ef233c; box-shadow: 0 0 15px rgba(217,4,41,0.4); }
+    .btn-gold { background: var(--gold); border-color: var(--gold); color: #000; }
+    .btn-green { background: var(--green); border-color: var(--green); color: #000; }
+
+    /* Долги */
+    .debt-card { background: var(--elevated); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+    .debt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .debt-name { font-weight: 800; font-size: 1.1rem; }
+    .debt-total { color: var(--red); font-weight: 800; font-family: var(--mono); }
+    
+    .debt-progress { height: 8px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+    .debt-fill { height: 100%; background: var(--green); transition: 0.5s; width: 0%; }
+    
+    .debt-actions { display: flex; justify-content: space-between; align-items: center; }
+    .debt-left { font-size: 0.85rem; color: var(--text-muted); }
+    .debt-left span { color: var(--text); font-weight: 800; }
+    .debt-btns { display: flex; gap: 10px; }
+    .btn-small { padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; }
+    
+    /* Модалка */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; padding: 25px; }
+    
+    /* Таблица расходов */
+    .expense-list { margin-top: 15px; max-height: 200px; overflow-y: auto; }
+    .expense-item { display: flex; justify-content: space-between; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 5px; font-size: 0.9rem; }
+    .expense-item span:last-child { color: var(--red); font-weight: 800; }
+    
+    .chart-box { height: 300px; width: 100%; }
+  </style>
+</head>
+<body>
+
+<header class="top-nav">
+  <a href="index.html" class="back-btn">←</a>
+  <div class="page-title">Финансы</div>
+  <div style="width:24px;"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('shift', this)">Смена</button>
+  <button class="tab-btn" onclick="switchTab('debts', this)">Долги</button>
+  <button class="tab-btn" onclick="switchTab('analytics', this)">Аналитика</button>
+</div>
+
+<div class="content">
+
+  <!-- ВКЛАДКА 1: СМЕНА -->
+  <div id="pane-shift" class="pane active">
+    <div class="grid">
+      
+      <!-- Ввод баланса -->
+      <div class="card">
+        <div class="card-header">Учет смены</div>
+        <div class="input-group">
+          <label>Баланс утром (тг):</label>
+          <input type="number" id="morningBal" class="input-field" placeholder="0">
+        </div>
+        <div class="input-group">
+          <label>Баланс вечером (тг):</label>
+          <input type="number" id="eveningBal" class="input-field" placeholder="0">
+        </div>
+        
+        <div style="border-top: 1px dashed var(--border); margin: 15px 0; padding-top: 15px;">
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Детализация расходов (если нужно)</p>
+          <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <input type="text" id="expName" class="input-field" style="width:50%; text-align:left;" placeholder="Например: Обед">
+            <input type="number" id="expSum" class="input-field" style="width:40%;" placeholder="Сумма">
+            <button class="btn btn-red" onclick="addExpenseToList()" style="padding:10px;">+</button>
+          </div>
+          <div class="expense-list" id="expenseList"></div>
+          <div style="text-align:right; font-weight:800; margin-top:10px; color:var(--red);">Итого расходов: <span id="totalExp">0</span> тг</div>
+        </div>
+
+        <button class="btn btn-green btn-block" onclick="saveShift()" style="margin-top:20px;">Зафиксировать смену</button>
+
+        <div class="card" id="shiftResult" style="display:none; margin-top:20px; background:rgba(46,213,115,0.1); border-color:var(--green);">
+          <div style="text-align:center;">
+            <div style="font-size:0.85rem; color:var(--text-muted);">ЧИСТАЯ ПРИБЫЛЬ ЗА ДЕНЬ</div>
+            <div style="font-size:2.5rem; font-weight:900; color:var(--green); font-family:var(--mono);" id="netProfit">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Кредит банка -->
+      <div class="card">
+        <div class="card-header">Банковский кредит</div>
+        <div class="input-group">
+          <label>Остаток (тг):</label>
+          <input type="number" id="bankDebt" class="input-field" onchange="saveBankDebt()">
+        </div>
+        <div class="input-group">
+          <label>Платеж в месяц:</label>
+          <input type="number" id="bankPay" class="input-field" onchange="saveBankDebt()">
+        </div>
+        
+        <div class="input-group" style="margin-top:20px;">
+          <label>Внести платеж:</label>
+          <input type="number" id="bankPaymentInput" class="input-field" placeholder="0">
+          <button class="btn btn-gold" onclick="makeBankPayment()" style="padding:12px;">Оплатить</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ВКЛАДКА 2: ДОЛГИ -->
+  <div id="pane-debts" class="pane">
+    <div class="card">
+      <div class="card-header">
+        Долги друзьям
+        <button class="btn btn-red btn-small" onclick="openDebtModal()">+ Новый долг</button>
+      </div>
+      <div id="friendDebtList"></div>
+    </div>
+  </div>
+
+  <!-- ВКЛАДКА 3: АНАЛИТИКА -->
+  <div id="pane-analytics" class="pane">
+    <div class="card">
+      <div class="card-header">График чистого дохода (последние 10 смен)</div>
+      <div class="chart-box"><canvas id="financeChart"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- МОДАЛКА ДОБАВЛЕНИЯ ДОЛГА -->
+<div class="modal" id="debtModal">
+  <div class="modal-box">
+    <h2 style="margin-bottom:20px;">Новый долг</h2>
+    <div class="input-group">
+      <label>Имя:</label>
+      <input type="text" id="newDebtName" class="input-field" style="width:200px; text-align:left;">
+    </div>
+    <div class="input-group">
+      <label>Сумма (тг):</label>
+      <input type="number" id="newDebtSum" class="input-field">
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn btn-block" onclick="closeModal('debtModal')">Отмена</button>
+      <button class="btn btn-green btn-block" onclick="createDebt()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА ВНЕСЕНИЯ ПЛАТЕЖА ПО ДОЛГУ -->
+<div class="modal" id="paymentModal">
+  <div class="modal-box">
+    <h2 style="margin-bottom:10px;">Внести платеж</h2>
+    <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;" id="payModalName">Дархан</p>
+    <div class="input-group">
+      <label>Сумма платежа:</label>
+      <input type="number" id="paymentAmount" class="input-field" placeholder="0">
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn btn-block" onclick="closeModal('paymentModal')">Отмена</button>
+      <button class="btn btn-gold btn-block" onclick="submitPayment()">Оплатить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ==========================================
+     FIREBASE INIT
+     ========================================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyDrPu0bv13jvnju8JJyHkgeRQcf66fDtlk",
+    authDomain: "our-tracker-3cbb5.firebaseapp.com",
+    databaseURL: "https://our-tracker-3cbb5-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "our-tracker-3cbb5"
+  };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const DB_FIN = db.ref('man_finance');
+
+  /* ==========================================
+     ГЛОБАЛЬНОЕ СОСТОЯНИЕ
+     ========================================== */
+  let state = {
+    finance: { bankDebt: 0, bankPay: 0, logs: [], debts: [] },
+    currentExpenses: [], // Временный массив для текущей смены
+    activeDebtIndex: -1 // Для модалки платежа
+  };
+
+  let chartInstance = null;
+
+  /* ==========================================
+     СЛУШАЕМ БАЗУ
+     ========================================== */
+  DB_FIN.on('value', (snap) => {
+    if (snap.exists()) {
+      state.finance = snap.val();
+      if(!state.finance.debts) state.finance.debts = [];
+      if(!state.finance.logs) state.finance.logs = [];
+    }
+    renderAll();
+  });
+
+  /* ==========================================
+     НАВИГАЦИЯ
+     ========================================== */
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pane-' + tabId).classList.add('active');
+    btn.classList.add('active');
+    if(tabId === 'analytics') renderChart();
+  }
+
+  /* ==========================================
+     ЛОГИКА СМЕНЫ
+     ========================================== */
+  function addExpenseToList() {
+    const name = document.getElementById('expName').value.trim();
+    const sum = parseFloat(document.getElementById('expSum').value);
+    if(!name || isNaN(sum) || sum <= 0) return alert("Введи название и сумму");
+
+    state.currentExpenses.push({ name, sum });
+    document.getElementById('expName').value = '';
+    document.getElementById('expSum').value = '';
+    
+    renderExpenses();
+  }
+
+  function renderExpenses() {
+    const list = document.getElementById('expenseList');
+    list.innerHTML = '';
+    let total = 0;
+    state.currentExpenses.forEach((e, i) => {
+      total += e.sum;
+      list.innerHTML += `<div class="expense-item"><span>${e.name}</span><span>${e.sum} тг</span></div>`;
+    });
+    document.getElementById('totalExp').innerText = total.toLocaleString();
+  }
+
+  function saveShift() {
+    const morning = parseFloat(document.getElementById('morningBal').value) || 0;
+    const evening = parseFloat(document.getElementById('eveningBal').value) || 0;
+    
+    if(morning === 0 && evening === 0) return alert("Введи баланс!");
+
+    const gross = evening - morning;
+    const totalExp = state.currentExpenses.reduce((acc, e) => acc + e.sum, 0);
+    const net = gross - totalExp;
+
+    const today = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+
+    const newLog = {
+      date: today,
+      morning,
+      evening,
+      expenses: [...state.currentExpenses],
+      totalExp,
+      gross,
+      net
+    };
+
+    // Сохраняем в облако
+    const updatedLogs = state.finance.logs || [];
+    updatedLogs.push(newLog);
+    
+    DB_FIN.update({ logs: updatedLogs }).then(() => {
+      // Очищаем поля после сохранения
+      document.getElementById('morningBal').value = '';
+      document.getElementById('eveningBal').value = '';
+      state.currentExpenses = [];
+      renderExpenses();
+      
+      document.getElementById('shiftResult').style.display = 'block';
+      document.getElementById('netProfit').innerText = net.toLocaleString() + ' тг';
+    });
+  }
+
+  /* ==========================================
+     ЛОГИКА БАНКА
+     ========================================== */
+  function saveBankDebt() {
+    const debt = parseFloat(document.getElementById('bankDebt').value) || 0;
+    const pay = parseFloat(document.getElementById('bankPay').value) || 0;
+    DB_FIN.update({ bankDebt: debt, bankPay: pay });
+  }
+
+  function makeBankPayment() {
+    const payment = parseFloat(document.getElementById('bankPaymentInput').value);
+    if(isNaN(payment) || payment <= 0) return alert("Введи сумму платежа");
+
+    let newDebt = (state.finance.bankDebt || 0) - payment;
+    if(newDebt < 0) newDebt = 0;
+
+    DB_FIN.update({ bankDebt: newDebt }).then(() => {
+      document.getElementById('bankPaymentInput').value = '';
+      alert(`Платеж ${payment} тг успешно внесен! Остаток: ${newDebt} тг.`);
+    });
+  }
+
+  /* ==========================================
+     ЛОГИКА ДОЛГОВ ДРУЗЬЯМ
+     ========================================== */
+  function openDebtModal() { document.getElementById('debtModal').classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  function createDebt() {
+    const name = document.getElementById('newDebtName').value.trim();
+    const sum = parseFloat(document.getElementById('newDebtSum').value);
+    if(!name || isNaN(sum) || sum <= 0) return alert("Заполни поля");
+
+    const newDebt = { name, total: sum, paid: 0, date: new Date().toLocaleDateString('ru-RU') };
+    
+    const updatedDebts = state.finance.debts || [];
+    updatedDebts.push(newDebt);
+    
+    DB_FIN.update({ debts: updatedDebts }).then(() => {
+      closeModal('debtModal');
+      document.getElementById('newDebtName').value = '';
+      document.getElementById('newDebtSum').value = '';
+    });
+  }
+
+  function openPaymentModal(index) {
+    state.activeDebtIndex = index;
+    const debt = state.finance.debts[index];
+    document.getElementById('payModalName').innerText = `${debt.name} (Остаток: ${(debt.total - debt.paid).toLocaleString()} тг)`;
+    document.getElementById('paymentAmount').value = '';
+    document.getElementById('paymentModal').classList.add('active');
+  }
+
+  function submitPayment() {
+    const amount = parseFloat(document.getElementById('paymentAmount').value);
+    if(isNaN(amount) || amount <= 0) return alert("Введи сумму");
+
+    const index = state.activeDebtIndex;
+    let debt = state.finance.debts[index];
+
+    let newPaid = debt.paid + amount;
+    if(newPaid > debt.total) newPaid = debt.total;
+
+    state.finance.debts[index].paid = newPaid;
+
+    DB_FIN.update({ debts: state.finance.debts }).then(() => {
+      closeModal('paymentModal');
+    });
+  }
+
+  function deleteDebt(index) {
+    if(confirm("Удалить запись о долге?")) {
+      state.finance.debts.splice(index, 1);
+      DB_FIN.update({ debts: state.finance.debts });
+    }
+  }
+
+  /* ==========================================
+     РЕНДЕР UI
+     ========================================== */
+  function renderAll() {
+    // Банк
+    if(document.getElementById('bankDebt')) {
+      document.getElementById('bankDebt').value = state.finance.bankDebt || 0;
+      document.getElementById('bankPay').value = state.finance.bankPay || 0;
+    }
+
+    // Долги друзьям
+    const list = document.getElementById('friendDebtList');
+    if(list) {
+      list.innerHTML = '';
+      if(state.finance.debts.length === 0) {
+        list.innerHTML = '<p style="color:#666; text-align:center;">Нет долгов друзьям.</p>';
+      } else {
+        state.finance.debts.forEach((d, i) => {
+          const left = d.total - d.paid;
+          const pct = (d.paid / d.total) * 100;
+          
+          list.innerHTML += `
+            <div class="debt-card">
+              <div class="debt-header">
+                <div class="debt-name">${d.name}</div>
+                <div class="debt-total">${left.toLocaleString()} тг</div>
+              </div>
+              <div class="debt-progress"><div class="debt-fill" style="width: ${pct}%"></div></div>
+              <div class="debt-actions">
+                <div class="debt-left">Выплачено: <span>${d.paid.toLocaleString()}</span> из ${d.total.toLocaleString()}</div>
+                <div class="debt-btns">
+                  <button class="btn btn-gold btn-small" onclick="openPaymentModal(${i})">Внести</button>
+                  <button class="btn btn-red btn-small" onclick="deleteDebt(${i})">Удалить</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+  }
+
+  /* ==========================================
+     ГРАФИК
+     ========================================== */
+  function renderChart() {
+    const ctx = document.getElementById('financeChart').getContext('2d');
+    if(chartInstance) chartInstance.destroy();
+
+    const logs = (state.finance.logs || []).slice(-10);
+    const labels = logs.map(l => l.date);
+    const dataPoints = logs.map(l => l.net);
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels.length > 0 ? labels : ['Нет данных'],
+        datasets: [{
+          label: 'Чистый доход (тг)',
+          data: dataPoints.length > 0 ? dataPoints : [0],
+          backgroundColor: '#2ed573',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#222' }, ticks: { color: '#888' } },
+          x: { grid: { display: false }, ticks: { color: '#888' } }
+        }
+      }
+    });
+  }
+
+</script>
+</body>
+</html>

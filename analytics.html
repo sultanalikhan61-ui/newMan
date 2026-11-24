@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Big Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    /* =========================================
+       БАЗА СТИЛЕЙ (Тёмная тема)
+       ========================================= */
+    :root {
+      --bg: #050505; --surface: #121212; --elevated: #1e1e1e; --border: #333;
+      --text: #fff; --text-muted: #888; 
+      --red: #d90429; --gold: #d4af37; --green: #2ed573; --blue: #1e90ff; --purple: #9b59b6;
+      --font: 'Inter', sans-serif; --mono: 'Montserrat', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; min-height: 100vh; }
+    
+    /* Навигация сверху */
+    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5,5,5,0.9); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+    .back-btn { color: var(--gold); text-decoration: none; font-weight: 800; font-size: 1.2rem; transition: 0.2s; }
+    .back-btn:hover { color: #fff; }
+    .page-title { font-size: 1.2rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+    
+    .content { padding: 20px; max-width: 1400px; margin: 0 auto; padding-bottom: 100px; }
+
+    /* =========================================
+       ФИЛЬТРЫ И ИНСАЙТЫ
+       ========================================= */
+    .controls-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 25px; flex-wrap: wrap; gap: 15px;
+    }
+    .filters { display: flex; gap: 10px; background: var(--surface); padding: 5px; border-radius: 8px; border: 1px solid var(--border); }
+    .filter-btn {
+      background: none; border: none; color: var(--text-muted); padding: 8px 15px;
+      font-size: 0.85rem; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s;
+    }
+    .filter-btn.active { background: var(--red); color: #fff; }
+    .filter-btn:hover:not(.active) { color: var(--text); background: var(--elevated); }
+
+    .insight-box {
+      background: linear-gradient(90deg, rgba(30, 144, 255, 0.1), transparent);
+      border-left: 4px solid var(--blue);
+      padding: 15px 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px;
+      font-size: 0.95rem; line-height: 1.5; display: flex; align-items: center; gap: 15px;
+    }
+    .insight-icon { font-size: 2rem; }
+
+    /* =========================================
+       СЕТКА И КАРТОЧКИ KPI
+       ========================================= */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+    .kpi-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--border); }
+    .kpi-card.green::after { background: var(--green); }
+    .kpi-card.red::after { background: var(--red); }
+    .kpi-card.gold::after { background: var(--gold); }
+    .kpi-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; margin-bottom: 10px; }
+    .kpi-val { font-size: 2.2rem; font-weight: 900; font-family: var(--mono); }
+    .kpi-val span { font-size: 1rem; color: var(--text-muted); }
+
+    /* =========================================
+       СЕТКА ГРАФИКОВ
+       ========================================= */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; }
+    @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px dashed var(--border); padding-bottom: 15px; }
+    .chart-title { font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+    .chart-container { position: relative; flex: 1; min-height: 300px; width: 100%; }
+
+    /* Спец стили для разных графиков */
+    .chart-card.full-width { grid-column: 1 / -1; }
+    
+  </style>
+</head>
+<body>
+
+<header class="top-nav">
+  <a href="index.html" class="back-btn">←</a>
+  <div class="page-title">Big Data</div>
+  <div style="width:24px;"></div>
+</header>
+
+<div class="content">
+
+  <!-- Управление и Инсайты -->
+  <div class="controls-bar">
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter(7, this)">7 дней</button>
+      <button class="filter-btn" onclick="setFilter(30, this)">30 дней</button>
+      <button class="filter-btn" onclick="setFilter(9999, this)">Всё время</button>
+    </div>
+  </div>
+
+  <div class="insight-box" id="smartInsight">
+    <div class="insight-icon">🧠</div>
+    <div id="insightText">Анализ данных... Пожалуйста, подождите.</div>
+  </div>
+
+  <!-- Ключевые показатели (KPI) -->
+  <div class="kpi-grid">
+    <div class="kpi-card green">
+      <div class="kpi-title">Общий доход (за период)</div>
+      <div class="kpi-val" id="kpiTotalIncome">0 <span>тг</span></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-title">Общие расходы</div>
+      <div class="kpi-val" id="kpiTotalExpense">0 <span>тг</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-title">Средний доход в день</div>
+      <div class="kpi-val" id="kpiAvgIncome">0 <span>тг</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Смен отработано</div>
+      <div class="kpi-val" id="kpiTotalShifts">0</div>
+    </div>
+  </div>
+
+  <!-- Графики -->
+  <div class="charts-grid">
+    
+    <!-- График 1: Динамика дохода и расхода -->
+    <div class="chart-card full-width">
+      <div class="chart-header">
+        <div class="chart-title"><span>📈</span> Динамика (Доход vs Расход)</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="financeLineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- График 2: Структура расходов -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title"><span>🍕</span> Структура расходов</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="expenseDoughnutChart"></canvas>
+      </div>
+    </div>
+
+    <!-- График 3: Прогресс по долгам -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title"><span>💀</span> Кредитная нагрузка</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="debtPolarChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  /* ==========================================
+     FIREBASE CONFIG
+     ========================================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyDrPu0bv13jvnju8JJyHkgeRQcf66fDtlk",
+    authDomain: "our-tracker-3cbb5.firebaseapp.com",
+    databaseURL: "https://our-tracker-3cbb5-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "our-tracker-3cbb5"
+  };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const DB_FIN = db.ref('man_finance');
+  const DB_HABITS = db.ref('man_habits');
+
+  // Глобальные данные
+  let rawFinanceData = { logs: [], debts: [], bankDebt: 0 };
+  let rawHabitsData = { streak: { count: 0 } };
+  
+  let currentFilterDays = 7; // По умолчанию 7 дней
+  
+  // Инстансы графиков (чтобы уничтожать при перерисовке)
+  let chartLine, chartDoughnut, chartPolar;
+
+  /* ==========================================
+     СЛУШАЕМ FIREBASE
+     ========================================== */
+  DB_FIN.on('value', (snap) => {
+    if(snap.exists()) {
+      rawFinanceData = snap.val();
+      if(!rawFinanceData.logs) rawFinanceData.logs = [];
+      if(!rawFinanceData.debts) rawFinanceData.debts = [];
+    }
+    processAndRender();
+  });
+
+  DB_HABITS.on('value', (snap) => {
+    if(snap.exists()) {
+      rawHabitsData = snap.val();
+    }
+    generateSmartInsight();
+  });
+
+  /* ==========================================
+     ФИЛЬТРАЦИЯ И ОБРАБОТКА ДАННЫХ
+     ========================================== */
+  function setFilter(days, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilterDays = days;
+    processAndRender();
+  }
+
+  function processAndRender() {
+    let logs = rawFinanceData.logs || [];
+    
+    // Если фильтр не "всё время", обрезаем логи
+    if(currentFilterDays !== 9999) {
+      logs = logs.slice(-currentFilterDays);
+    }
+
+    // 1. Считаем KPI
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let totalShifts = logs.length;
+
+    logs.forEach(log => {
+      totalIncome += (log.net || 0);
+      totalExpense += (log.totalExp || 0);
+    });
+
+    const avgIncome = totalShifts > 0 ? (totalIncome / totalShifts) : 0;
+
+    document.getElementById('kpiTotalIncome').innerHTML = `${totalIncome.toLocaleString()} <span>тг</span>`;
+    document.getElementById('kpiTotalExpense').innerHTML = `${totalExpense.toLocaleString()} <span>тг</span>`;
+    document.getElementById('kpiAvgIncome').innerHTML = `${Math.round(avgIncome).toLocaleString()} <span>тг</span>`;
+    document.getElementById('kpiTotalShifts').innerText = totalShifts;
+
+    // 2. Рисуем графики
+    renderLineChart(logs);
+    renderDoughnutChart(logs);
+    renderPolarChart();
+    
+    // 3. Обновляем инсайты
+    generateSmartInsight(totalIncome, totalExpense, avgIncome, totalShifts);
+  }
+
+  /* ==========================================
+     ГРАФИК 1: ЛИНЕЙНЫЙ (ДИНАМИКА)
+     ========================================== */
+  function renderLineChart(logs) {
+    const ctx = document.getElementById('financeLineChart').getContext('2d');
+    if(chartLine) chartLine.destroy();
+
+    const labels = logs.map(l => l.date);
+    const incomeData = logs.map(l => l.net);
+    const expenseData = logs.map(l => l.totalExp);
+
+    // Если нет данных, рисуем пустые оси
+    if(labels.length === 0) { labels.push('Нет данных'); incomeData.push(0); expenseData.push(0); }
+
+    chartLine = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Чистый доход',
+            data: incomeData,
+            borderColor: '#2ed573',
+            backgroundColor: 'rgba(46, 213, 115, 0.1)',
+            borderWidth: 3,
+            pointBackgroundColor: '#fff',
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Расходы',
+            data: expenseData,
+            borderColor: '#d90429',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { 
+          legend: { labels: { color: '#fff', font: {family: 'Inter'} } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#222' }, ticks: { color: '#888' } },
+          x: { grid: { display: false }, ticks: { color: '#888' } }
+        }
+      }
+    });
+  }
+
+  /* ==========================================
+     ГРАФИК 2: КОЛЬЦЕВОЙ (РАСХОДЫ)
+     ========================================== */
+  function renderDoughnutChart(logs) {
+    const ctx = document.getElementById('expenseDoughnutChart').getContext('2d');
+    if(chartDoughnut) chartDoughnut.destroy();
+
+    // Агрегируем расходы по категориям
+    let categories = {};
+    logs.forEach(log => {
+      if(log.expenses) {
+        log.expenses.forEach(exp => {
+          if(!categories[exp.name]) categories[exp.name] = 0;
+          categories[exp.name] += exp.sum;
+        });
+      }
+    });
+
+    const labels = Object.keys(categories);
+    const data = Object.values(categories);
+
+    // Если нет данных
+    if(labels.length === 0) {
+      labels.push('Нет расходов');
+      data.push(1);
+    }
+
+    chartDoughnut = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: [
+            '#d90429', '#d4af37', '#1e90ff', '#9b59b6', '#2ed573', '#ff9ff3'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#fff' } }
+        },
+        cutout: '70%'
+      }
+    });
+  }
+
+  /* ==========================================
+     ГРАФИК 3: ПОЛЯРНЫЙ (ДОЛГИ)
+     ========================================== */
+  function renderPolarChart() {
+    const ctx = document.getElementById('debtPolarChart').getContext('2d');
+    if(chartPolar) chartPolar.destroy();
+
+    let labels = ['Банковский кредит'];
+    let data = [rawFinanceData.bankDebt || 0];
+
+    if(rawFinanceData.debts) {
+      rawFinanceData.debts.forEach(d => {
+        labels.push(d.name);
+        data.push(d.total - (d.paid || 0)); // Остаток
+      });
+    }
+
+    // Если всё закрыто
+    if(data.every(v => v === 0)) {
+      labels = ['Всё закрыто!'];
+      data = [1];
+    }
+
+    chartPolar = new Chart(ctx, {
+      type: 'polarArea',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: [
+            'rgba(217, 4, 41, 0.7)',
+            'rgba(212, 175, 55, 0.7)',
+            'rgba(30, 144, 255, 0.7)',
+            'rgba(155, 89, 182, 0.7)'
+          ],
+          borderColor: '#111'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#fff', boxWidth: 10 } }
+        },
+        scales: {
+          r: { grid: { color: '#333' }, ticks: { display: false } }
+        }
+      }
+    });
+  }
+
+  /* ==========================================
+     УМНЫЕ ИНСАЙТЫ (SMART INSIGHTS)
+     ========================================== */
+  function generateSmartInsight(totalIncome, totalExpense, avgIncome, totalShifts) {
+    const el = document.getElementById('insightText');
+    if(!el) return;
+
+    let insights = [];
+
+    // 1. Анализ долгов
+    let totalDebt = rawFinanceData.bankDebt || 0;
+    if(rawFinanceData.debts) rawFinanceData.debts.forEach(d => totalDebt += (d.total - (d.paid || 0)));
+
+    if(totalDebt > 0 && avgIncome > 0) {
+      const shiftsToPay = Math.ceil(totalDebt / avgIncome);
+      insights.push(`💀 Чтобы полностью закрыть все долги, тебе нужно отработать <b>${shiftsToPay} смен</b> в текущем темпе.`);
+    } else if (totalDebt === 0) {
+      insights.push(`🔥 <b>Ты полностью свободен от долгов!</b> Теперь весь доход идет на твои цели.`);
+    }
+
+    // 2. Анализ эффективности
+    if(totalExpense > totalIncome && totalShifts > 0) {
+      insights.push(`⚠️ <b>Тревога:</b> За выбранный период расходы превысили доходы! Тебе нужно урезать траты.`);
+    } else if (avgIncome > 0) {
+      const dailySave = Math.round(avgIncome * 0.3); // Рекомендация откладывать 30%
+      insights.push(`💰 Если ты начнешь откладывать 30% от дохода, ты сможешь сберегать <b>${dailySave.toLocaleString()} тг в день</b>.`);
+    }
+
+    // 3. Анализ дисциплины
+    const streak = rawHabitsData.streak ? rawHabitsData.streak.count : 0;
+    if(streak > 3) {
+      insights.push(`⚔️ <b>Дисциплина крепнет!</b> Ты держишь стрик уже ${streak} дней. Продолжай в том же духе.`);
+    }
+
+    // Выводим случайный инсайт или склеиваем
+    el.innerHTML = insights.length > 0 ? insights.join('<br><br>') : "Недостаточно данных для глубокого анализа. Продолжай работать.";
+  }
+
+</script>
+</body>
+</html>
