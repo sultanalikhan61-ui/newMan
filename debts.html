@@ -124,6 +124,10 @@
     /* Инфо-блок */
     .info-box { background: rgba(30, 144, 255, 0.1); border-left: 4px solid var(--blue); padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.9rem; color: #ccc; line-height: 1.5; }
 
+
+    .month-box { margin-bottom: 14px; }
+    .progress-bar-fill.month { background: linear-gradient(90deg, var(--gold), #f1d56b); }
+    .progress-bar-fill.month.done { background: linear-gradient(90deg, var(--green), #7bed9f); }
   </style>
 </head>
 <body>
@@ -290,6 +294,16 @@
   function openModal(id) { document.getElementById(id).classList.add('active'); }
   function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
+
+  function getMonthKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1);
+  }
+  // сколько внесено в ЭТОМ месяце (если месяц сменился — 0)
+  function getMonthPaid(loan) {
+    return loan.monthKey === getMonthKey() ? (loan.monthPaid || 0) : 0;
+  }
+
   /* ==========================================
      ЛОГИКА БАНКОВСКИХ КРЕДИТОВ
      ========================================== */
@@ -332,11 +346,13 @@
 
     let loan = debtsData.bank[activeBankIndex];
     let newPaid = loan.paid + amount;
+    if(newPaid > loan.total) newPaid = loan.total;
+    const realAmount = newPaid - loan.paid; // сколько реально списалось
 
-    if(newPaid > loan.total) newPaid = loan.total; // Защита от переплаты
+    loan.monthPaid = getMonthPaid(loan) + realAmount;
+    loan.monthKey = getMonthKey();
+    loan.paid = newPaid;
 
-    debtsData.bank[activeBankIndex].paid = newPaid;
-    
     DB_DEBTS.update({ bank: debtsData.bank }).then(() => {
       closeModal('payBankModal');
       if(newPaid === loan.total) alert("🔥 Поздравляю! Кредит полностью закрыт!");
@@ -425,6 +441,9 @@
       const left = loan.total - loan.paid;
       totalAllDebt += left;
       const pct = (loan.paid / loan.total) * 100;
+      const mPaid = getMonthPaid(loan);
+      const mPct = loan.monthly > 0 ? Math.min(100, (mPaid / loan.monthly) * 100) : 0;
+      const mDone = mPct >= 100;
 
       bankContainer.innerHTML += `
         <div class="debt-card">
@@ -439,14 +458,17 @@
             </div>
           </div>
           
-          <div class="progress-container">
-            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
-            <div class="progress-text"><span>Выплачено: ${loan.paid.toLocaleString()}</span> <span>${pct.toFixed(1)}%</span></div>
+          <div class="month-box">
+            <div class="progress-bar-bg"><div class="progress-bar-fill month ${mDone ? 'done' : ''}" style="width: ${mPct}%"></div></div>
+            <div class="progress-text">
+              <span>В этом месяце: ${mPaid.toLocaleString()} / ${loan.monthly.toLocaleString()} тг</span>
+              <span>${mDone ? '✅ Месяц закрыт' : mPct.toFixed(0) + '%'}</span>
+            </div>
           </div>
 
-          <div class="debt-actions">
-            <button class="btn btn-pay" onclick="openBankPayModal(${i})">Внести платеж</button>
-            <button class="btn btn-delete" onclick="deleteBankLoan(${i})">✖</button>
+          <div class="progress-container">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
+            <div class="progress-text"><span>Всего выплачено: ${loan.paid.toLocaleString()}</span> <span>${pct.toFixed(1)}%</span></div>
           </div>
         </div>
       `;
