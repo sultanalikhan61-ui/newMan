@@ -470,6 +470,11 @@
             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
             <div class="progress-text"><span>Всего выплачено: ${loan.paid.toLocaleString()}</span> <span>${pct.toFixed(1)}%</span></div>
           </div>
+
+          <div class="debt-actions">
+            <button class="btn btn-pay" onclick="openBankPayModal(${i})">Внести платеж</button>
+            <button class="btn btn-delete" onclick="deleteBankLoan(${i})">✖</button>
+          </div>
         </div>
       `;
     });
