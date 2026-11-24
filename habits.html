@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Увлечения и Мастерская</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/core.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/core.js"></script>
+
+  <style>
+    /* Локальные стили страницы увлечений поверх css/core.css */
+    .filter-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 20px;
+    }
+    .cat-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    .cat-pill.active, .cat-pill:hover {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+    }
+
+    .timer-display {
+      font-family: var(--mono);
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-align: center;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 12px 0;
+      letter-spacing: 2px;
+    }
+
+    .timer-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .hobby-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+      transition: var(--transition);
+    }
+    .hobby-item:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+    .hobby-item.done {
+      border-color: rgba(46, 213, 115, 0.45);
+      background: linear-gradient(135deg, rgba(46, 213, 115, 0.05), var(--surface));
+    }
+
+    .hobby-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      background: var(--elevated);
+      color: var(--gold);
+      border: 1px solid var(--border);
+    }
+    .badge.auto { color: var(--red); border-color: rgba(217, 4, 41, 0.4); }
+    .badge.music { color: var(--purple); border-color: rgba(155, 89, 182, 0.4); }
+    .badge.fishing { color: var(--blue); border-color: rgba(30, 144, 255, 0.4); }
+    .badge.craft { color: var(--green); border-color: rgba(46, 213, 115, 0.4); }
+
+    .hobby-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 10px 0;
+      font-family: var(--mono);
+    }
+    .hobby-meta strong { color: var(--text); }
+
+    .hobby-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .prep-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .prep-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .prep-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+    }
+    .prep-label input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--gold);
+    }
+    .prep-label.checked span {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .prompt-preview {
+      background: #090909;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: #e6e6e6;
+      margin: 10px 0 12px;
+      word-break: break-word;
+    }
+
+    .empty-box {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-nav">
+    <a href="index.html" class="back-btn">←</a>
+    <div class="page-title">Увлечения</div>
+    <div class="nav-badge" id="navHoursBadge">0.0 ч</div>
+  </header>
+
+  <main class="content">
+
+    <!-- 1. KPI ПО УВЛЕЧЕНИЯМ -->
+    <section class="kpi-grid">
+      <div class="kpi-card gold">
+        <div class="kpi-title">Всего часов</div>
+        <div class="kpi-val gold" id="kpiTotalHours">0.0</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-title">Завершено проектов</div>
+        <div class="kpi-val green" id="kpiCompletedCount">0 / 0</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-title">Вложено в хобби</div>
+        <div class="kpi-val red" id="kpiSpentKZT">0 тг</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-title">Активная сессия</div>
+        <div class="kpi-val" id="kpiSessionStatus">ПАУЗА</div>
+      </div>
+    </section>
+
+    <!-- 2. ФИЛЬТРЫ ПО КАТЕГОРИЯМ -->
+    <div class="filter-strip" id="categoryFilters">
+      <button class="cat-pill active" data-cat="all" onclick="selectCategory('all', this)">Все направления</button>
+      <button class="cat-pill" data-cat="auto" onclick="selectCategory('auto', this)">🔧 Авто и гараж</button>
+      <button class="cat-pill" data-cat="music" onclick="selectCategory('music', this)">🎵 Suno и треки</button>
+      <button class="cat-pill" data-cat="fishing" onclick="selectCategory('fishing', this)">🎣 Выезды и рыбалка</button>
+      <button class="cat-pill" data-cat="craft" onclick="selectCategory('craft', this)">💻 Код, арт и подарки</button>
+      <button class="cat-pill" data-cat="other" onclick="selectCategory('other', this)">⚡ Прочее</button>
+    </div>
+
+    <!-- 3. ИНСТРУМЕНТЫ: ТАЙМЕР СЕССИИ + SUNO PROMPT BUILDER -->
+    <div class="grid-2">
+
+      <!-- Таймер сессии -->
+      <section class="card">
+        <div class="section-title">
+          <span>⏱ Таймер сессии</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);" id="timerTargetLabel">Цель не выбрана</span>
+        </div>
+
+        <div class="input-group">
+          <label for="timerHobbySelect">К какой задаче/сессии зачислить время</label>
+          <select id="timerHobbySelect" class="input-field" onchange="updateTimerLabel()"></select>
+        </div>
+
+        <div class="timer-display" id="liveSessionTimer">00:00:00</div>
+
+        <div class="timer-controls">
+          <button class="btn btn-green btn-sm" type="button" onclick="startSessionTimer()">Старт</button>
+          <button class="btn btn-dark btn-sm" type="button" onclick="pauseSessionTimer()">Пауза</button>
+          <button class="btn btn-red btn-sm" type="button" onclick="commitSessionTimer()">Зачислить</button>
+        </div>
+      </section>
+
+      <!-- Генератор промптов для Suno -->
+      <section class="card">
+        <div class="section-title">
+          <span>🎛 Suno Style Prompt Builder</span>
+          <span style="font-size:0.75rem; color:var(--gold);">EN / RU</span>
+        </div>
+
+        <div class="grid-2" style="gap:10px;">
+          <div class="input-group">
+            <label for="sunoGenre">Жанр / Вайб</label>
+            <select id="sunoGenre" class="input-field" onchange="buildSunoPrompt()">
+              <option value="dark phonk, heavy sub bass, aggressive synth">Dark Phonk / Bass</option>
+              <option value="kazakh modern hip-hop, q-pop rhythm, atmospheric pads">Kazakh Hip-Hop / Q-Pop</option>
+              <option value="cinematic synthwave, night drive, pulsing arpeggio">Night Drive Synthwave</option>
+              <option value="acoustic emotional ballad, warm piano, heartfelt">Emotional Ballad</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="sunoMood">Настроение и темп</label>
+            <select id="sunoMood" class="input-field" onchange="buildSunoPrompt()">
+              <option value="determined, steel resolve, 128 BPM">Steel Resolve • 128 BPM</option>
+              <option value="late night highway, focused, 110 BPM">Night Highway • 110 BPM</option>
+              <option value="uplifting victory, bold brass, 124 BPM">Victory Drive • 124 BPM</option>
+              <option value="tender, sincere, slow groove, 84 BPM">Tender Groove • 84 BPM</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="sunoTitle">Название трека / Тема</label>
+          <input type="text" id="sunoTitle" class="input-field" placeholder="Например: Ночной Алматы / Дорога домой" oninput="buildSunoPrompt()">
+        </div>
+
+        <div class="prompt-preview" id="sunoPromptOutput"></div>
+
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-gold btn-sm" style="flex:1;" type="button" onclick="copySunoPrompt()">Копировать промпт</button>
+          <button class="btn btn-dark btn-sm" style="flex:1;" type="button" onclick="saveSunoAsHobby()">В список задач</button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 4. ЧЕК-ЛИСТ ПОДГОТОВКИ (ВЫЕЗД / ПРОЕКТ / СБОРКА) -->
+    <section class="card">
+      <div class="section-title">
+        <span>✅ Чек-лист готовности к выезду / проекту</span>
+        <button class="btn btn-dark btn-sm" type="button" onclick="resetPrepChecks()">Сбросить галочки</button>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <input type="text" id="newPrepInput" class="input-field" placeholder="Добавить пункт (например: мультиметр, OBD-кабель, снасти, паяльник)...">
+        <button class="btn btn-gold btn-sm" type="button" onclick="addPrepItem()">Добавить</button>
+      </div>
+
+      <div class="prep-list" id="prepChecklistContainer"></div>
+    </section>
+
+    <!-- 5. ЖУРНАЛ УВЛЕЧЕНИЙ И ПРОЕКТОВ -->
+    <section class="card">
+      <div class="section-title">
+        <span>🔥 Активные увлечения и сессии</span>
+        <button class="btn btn-gold btn-sm" type="button" onclick="openHobbyModal()">+ Новая запись</button>
+      </div>
+
+      <div id="hobbiesListContainer"></div>
+    </section>
+
+  </main>
+
+  <button class="fab" type="button" onclick="openHobbyModal()" title="Добавить увлечение">+</button>
+
+  <!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ / РЕДАКТИРОВАНИЯ -->
+  <div class="modal" id="hobbyModal">
+    <div class="modal-box">
+      <h2 style="margin-bottom:18px; color:var(--gold);" id="modalTitle">Новое увлечение / сессия</h2>
+
+      <div class="input-group">
+        <label for="hobbyName">Название</label>
+        <input type="text" id="hobbyName" class="input-field" placeholder="Например: Диагностика VAG / Трек в Suno / Выезд на воду">
+      </div>
+
+      <div class="input-group">
+        <label for="hobbyCategory">Категория</label>
+        <select id="hobbyCategory" class="input-field">
+          <option value="auto">🔧 Авто и гараж</option>
+          <option value="music">🎵 Suno и треки</option>
+          <option value="fishing">🎣 Выезды и рыбалка</option>
+          <option value="craft">💻 Код, арт и подарки</option>
+          <option value="other">⚡ Прочее</option>
+        </select>
+      </div>
+
+      <div class="grid-2" style="gap:10px;">
+        <div class="input-group">
+          <label for="hobbyHoursSpent">Потрачено часов</label>
+          <input type="number" step="0.5" min="0" id="hobbyHoursSpent" class="input-field" value="1">
+        </div>
+        <div class="input-group">
+          <label for="hobbyHoursGoal">Цель по часам</label>
+          <input type="number" step="1" min="1" id="hobbyHoursGoal" class="input-field" value="10">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="hobbyCost">Затраты на детали / материалы (тг)</label>
+        <input type="number" step="100" min="0" id="hobbyCost" class="input-field" value="0">
+      </div>
+
+      <div class="input-group">
+        <label for="hobbyNotes">Заметки, промпты, параметры</label>
+        <textarea id="hobbyNotes" rows="3" class="input-field" placeholder="Коды ошибок, настройки, идеи, маршрут..."></textarea>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn btn-dark" type="button" onclick="closeHobbyModal()">Отмена</button>
+        <button class="btn btn-gold" type="button" onclick="saveHobbyItem()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HOBBIES_PATH = "man_hobbies";
+
+    const CATEGORY_META = {
+      auto: { label: "🔧 Авто и гараж", cls: "auto" },
+      music: { label: "🎵 Suno и треки", cls: "music" },
+      fishing: { label: "🎣 Выезды и рыбалка", cls: "fishing" },
+      craft: { label: "💻 Код, арт и подарки", cls: "craft" },
+      other: { label: "⚡ Прочее", cls: "" }
+    };
+
+    const DEFAULT_STATE = {
+      items: [
+        {
+          id: "hb_seed_1",
+          name: "Ревизия авто и электроники",
+          category: "auto",
+          hoursSpent: 4.5,
+          hoursGoal: 12,
+          cost: 8500,
+          notes: "Проверка проводки, датчиков, замеров и расходников.",
+          completed: false,
+          updatedAt: Date.now()
+        },
+        {
+          id: "hb_seed_2",
+          name: "Треки и промпты в Suno AI",
+          category: "music",
+          hoursSpent: 3.0,
+          hoursGoal: 10,
+          cost: 0,
+          notes: "Сборка атмосферных треков на русском и казахском + английские стиль-промпты.",
+          completed: false,
+          updatedAt: Date.now()
+        },
+        {
+          id: "hb_seed_3",
+          name: "Выезд на природу и рыбалку",
+          category: "fishing",
+          hoursSpent: 6.0,
+          hoursGoal: 15,
+          cost: 6000,
+          notes: "Свежий воздух, перезагрузка головы, снасти и план маршрута.",
+          completed: false,
+          updatedAt: Date.now()
+        }
+      ],
+      prep: [
+        { id: "pr_1", text: "Мультиметр, набор ключей и фонарик", checked: true },
+        { id: "pr_2", text: "Заряженный повербанк и кабель", checked: false },
+        { id: "pr_3", text: "Вода, перекус и аптечка", checked: false }
+      ]
+    };
+
+    let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    let activeCategory = "all";
+    let editingId = null;
+
+    // Состояние таймера сессии
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let timerRunning = false;
+
+    function normalizeState(raw) {
+      if (!raw || typeof raw !== "object") {
+        return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      }
+      const items = Array.isArray(raw.items)
+        ? raw.items
+        : raw.items && typeof raw.items === "object"
+          ? Object.entries(raw.items).map(([id, val]) => ({ id, ...val }))
+          : JSON.parse(JSON.stringify(DEFAULT_STATE.items));
+
+      const prep = Array.isArray(raw.prep)
+        ? raw.prep
+        : raw.prep && typeof raw.prep === "object"
+          ? Object.entries(raw.prep).map(([id, val]) => ({ id, ...val }))
+          : JSON.parse(JSON.stringify(DEFAULT_STATE.prep));
+
+      return { items, prep };
+    }
+
+    function persistState(toastMsg = null) {
+      CoreDB.save(HOBBIES_PATH, state).then(() => {
+        if (toastMsg) coreToast(toastMsg, "gold");
+      });
+    }
+
+    function selectCategory(cat, btnEl) {
+      activeCategory = cat;
+      document.querySelectorAll("#categoryFilters .cat-pill").forEach((b) => b.classList.remove("active"));
+      if (btnEl) btnEl.classList.add("active");
+      renderHobbies();
+    }
+
+    function renderKPIs() {
+      const totalHours = state.items.reduce((sum, item) => sum + (Number(item.hoursSpent) || 0), 0);
+      const totalCost = state.items.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+      const completed = state.items.filter((item) => item.completed).length;
+      const totalCount = state.items.length;
+
+      document.getElementById("kpiTotalHours").textContent = totalHours.toFixed(1);
+      document.getElementById("navHoursBadge").textContent = `${totalHours.toFixed(1)} ч`;
+      document.getElementById("kpiCompletedCount").textContent = `${completed} / ${totalCount}`;
+      document.getElementById("kpiSpentKZT").textContent = formatKZT(totalCost);
+      document.getElementById("kpiSessionStatus").textContent = timerRunning ? "В РАБОТЕ" : "ПАУЗА";
+      document.getElementById("kpiSessionStatus").style.color = timerRunning ? "var(--green)" : "var(--text-muted)";
+    }
+
+    function populateTimerSelect() {
+      const sel = document.getElementById("timerHobbySelect");
+      const currentVal = sel.value;
+      sel.innerHTML = "";
+
+      if (!state.items.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Сначала добавь увлечение";
+        sel.appendChild(opt);
+        updateTimerLabel();
+        return;
+      }
+
+      state.items.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.name;
+        sel.appendChild(opt);
+      });
+
+      if (currentVal && state.items.some((i) => i.id === currentVal)) {
+        sel.value = currentVal;
+      }
+      updateTimerLabel();
+    }
+
+    function updateTimerLabel() {
+      const sel = document.getElementById("timerHobbySelect");
+      const label = document.getElementById("timerTargetLabel");
+      const found = state.items.find((i) => i.id === sel.value);
+      label.textContent = found ? `→ ${found.name}` : "Цель не выбрана";
+    }
+
+    function formatHMS(totalSec) {
+      const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+      const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+      const s = String(totalSec % 60).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+
+    function refreshTimerDisplay() {
+      document.getElementById("liveSessionTimer").textContent = formatHMS(timerSeconds);
+    }
+
+    function startSessionTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      renderKPIs();
+      timerInterval = setInterval(() => {
+        timerSeconds += 1;
+        refreshTimerDisplay();
+      }, 1000);
+      coreToast("Сессия запущена. Фокус на деле.", "gold");
+    }
+
+    function pauseSessionTimer() {
+      if (!timerRunning) return;
+      timerRunning = false;
+      clearInterval(timerInterval);
+      timerInterval = null;
+      renderKPIs();
+      coreToast("Сессия на паузе.", "gold");
+    }
+
+    function commitSessionTimer() {
+      pauseSessionTimer();
+      const targetId = document.getElementById("timerHobbySelect").value;
+      if (!targetId) {
+        coreToast("Выбери увлечение для зачисления времени.", "danger");
+        return;
+      }
+      if (timerSeconds < 10) {
+        coreToast("Слишком короткая сессия (меньше 10 сек).", "danger");
+        return;
+      }
+
+      const hoursToAdd = Number((timerSeconds / 3600).toFixed(2));
+      const item = state.items.find((i) => i.id === targetId);
+      if (item) {
+        item.hoursSpent = Number(((Number(item.hoursSpent) || 0) + hoursToAdd).toFixed(2));
+        item.updatedAt = Date.now();
+        if (item.hoursGoal > 0 && item.hoursSpent >= item.hoursGoal && !item.completed) {
+          item.completed = true;
+          triggerVictoryFlash();
+          logVictory(
+            `Цель по хобби достигнута: ${item.name}`,
+            `Набрано ${item.hoursSpent} ч из ${item.hoursGoal} ч.`,
+            "personal",
+            false
+          );
+        }
+      }
+
+      timerSeconds = 0;
+      refreshTimerDisplay();
+      persistState(`Зачислено +${hoursToAdd} ч`);
+      renderAll();
+    }
+
+    function buildSunoPrompt() {
+      const genre = document.getElementById("sunoGenre").value;
+      const mood = document.getElementById("sunoMood").value;
+      const title = document.getElementById("sunoTitle").value.trim();
+      const tagPart = title ? `theme: ${title}, ` : "";
+      const prompt = `${tagPart}${genre}, ${mood}, crisp studio mix, punchy low-end, high energy`;
+      document.getElementById("sunoPromptOutput").textContent = prompt;
+      return prompt;
+    }
+
+    function copySunoPrompt() {
+      const text = buildSunoPrompt();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          coreToast("Промпт Suno скопирован в буфер.", "gold");
+        }).catch(() => {
+          coreToast("Выдели текст промпта вручную.", "danger");
+        });
+      } else {
+        coreToast("Буфер обмена недоступен в этом браузере.", "danger");
+      }
+    }
+
+    function saveSunoAsHobby() {
+      const title = document.getElementById("sunoTitle").value.trim() || "Новый трек Suno";
+      const prompt = buildSunoPrompt();
+      state.items.unshift({
+        id: "hb_" + Date.now(),
+        name: `Suno: ${title}`,
+        category: "music",
+        hoursSpent: 0.5,
+        hoursGoal: 5,
+        cost: 0,
+        notes: `Style prompt: ${prompt}`,
+        completed: false,
+        updatedAt: Date.now()
+      });
+      persistState("Промпт сохранён в список увлечений.");
+      renderAll();
+    }
+
+    function renderPrepChecklist() {
+      const container = document.getElementById("prepChecklistContainer");
+      if (!state.prep.length) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.88rem;">Список подготовки пуст. Добавь вещи для выезда или сборки.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.prep.map((p) => `
+        <div class="prep-row">
+          <label class="prep-label ${p.checked ? "checked" : ""}">
+            <input type="checkbox" ${p.checked ? "checked" : ""} onchange="togglePrepItem('${p.id}')">
+            <span>${escapeHtml(p.text)}</span>
+          </label>
+          <button class="btn btn-dark btn-sm" type="button" onclick="removePrepItem('${p.id}')">✕</button>
+        </div>
+      `).join("");
+    }
+
+    function addPrepItem() {
+      const input = document.getElementById("newPrepInput");
+      const text = input.value.trim();
+      if (!text) return;
+      state.prep.push({ id: "pr_" + Date.now(), text, checked: false });
+      input.value = "";
+      persistState("Пункт добавлен в чек-лист.");
+      renderPrepChecklist();
+    }
+
+    function togglePrepItem(id) {
+      const target = state.prep.find((p) => p.id === id);
+      if (!target) return;
+      target.checked = !target.checked;
+      persistState();
+      renderPrepChecklist();
+    }
+
+    function removePrepItem(id) {
+      state.prep = state.prep.filter((p) => p.id !== id);
+      persistState("Пункт удалён.");
+      renderPrepChecklist();
+    }
+
+    function resetPrepChecks() {
+      state.prep.forEach((p) => { p.checked = false; });
+      persistState("Чек-лист сброшен к новому старту.");
+      renderPrepChecklist();
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderHobbies() {
+      const container = document.getElementById("hobbiesListContainer");
+      const list = activeCategory === "all"
+        ? state.items
+        : state.items.filter((i) => i.category === activeCategory);
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div class="empty-box">
+            <div style="font-size:1.8rem; margin-bottom:8px;">🛠</div>
+            <div style="font-weight:800; margin-bottom:4px;">В этом разделе пока пусто</div>
+            <div style="font-size:0.86rem;">Нажми «+ Новая запись», чтобы добавить сессию или цель.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map((item) => {
+        const meta = CATEGORY_META[item.category] || CATEGORY_META.other;
+        const spent = Number(item.hoursSpent) || 0;
+        const goal = Math.max(Number(item.hoursGoal) || 1, 1);
+        const pct = Math.min(Math.round((spent / goal) * 100), 100);
+
+        return `
+          <article class="hobby-item ${item.completed ? "done" : ""}">
+            <div class="hobby-top">
+              <div>
+                <span class="badge ${meta.cls}">${meta.label}</span>
+                ${item.completed ? `<span class="badge" style="color:var(--green); border-color:rgba(46,213,115,0.4); margin-left:6px;">✓ ГОТОВО</span>` : ""}
+                <h3 style="margin-top:8px; font-size:1.1rem; font-weight:800;">${escapeHtml(item.name)}</h3>
+              </div>
+              <div style="font-family:var(--mono); font-weight:900; color:var(--gold);">${pct}%</div>
+            </div>
+
+            ${item.notes ? `<p style="color:#ccc; font-size:0.9rem; white-space:pre-line;">${escapeHtml(item.notes)}</p>` : ""}
+
+            <div class="progress-wrap">
+              <div class="progress-fill" style="width:${pct}%;"></div>
+            </div>
+
+            <div class="hobby-meta">
+              <span>Время: <strong>${spent} / ${goal} ч</strong></span>
+              <span>Затраты: <strong>${formatKZT(item.cost)}</strong></span>
+            </div>
+
+            <div class="hobby-actions">
+              <button class="btn btn-dark btn-sm" type="button" onclick="quickAddHour('${item.id}', 1)">+1 ч</button>
+              <button class="btn btn-dark btn-sm" type="button" onclick="toggleHobbyDone('${item.id}')">${item.completed ? "Вернуть в работу" : "Завершить"}</button>
+              <button class="btn btn-dark btn-sm" type="button" onclick="openHobbyModal('${item.id}')">Изменить</button>
+              <button class="btn btn-red btn-sm" type="button" onclick="deleteHobby('${item.id}')">Удалить</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function quickAddHour(id, delta) {
+      const item = state.items.find((i) => i.id === id);
+      if (!item) return;
+      item.hoursSpent = Number(((Number(item.hoursSpent) || 0) + delta).toFixed(2));
+      item.updatedAt = Date.now();
+      if (item.hoursGoal > 0 && item.hoursSpent >= item.hoursGoal && !item.completed) {
+        item.completed = true;
+        triggerVictoryFlash();
+      }
+      persistState(`Добавлено +${delta} ч к «${item.name}»`);
+      renderAll();
+    }
+
+    function toggleHobbyDone(id) {
+      const item = state.items.find((i) => i.id === id);
+      if (!item) return;
+      item.completed = !item.completed;
+      item.updatedAt = Date.now();
+
+      if (item.completed) {
+        triggerVictoryFlash();
+        logVictory(
+          `Закрыт этап по увлечениям: ${item.name}`,
+          `Потрачено ${item.hoursSpent || 0} ч, вложено ${formatKZT(item.cost || 0)}.`,
+          "personal",
+          true
+        );
+        persistState("Этап отмечен как завершённый.");
+      } else {
+        persistState("Этап возвращён в работу.");
+      }
+      renderAll();
+    }
+
+    function deleteHobby(id) {
+      const item = state.items.find((i) => i.id === id);
+      if (!item) return;
+      if (!confirm(`Удалить «${item.name}»?`)) return;
+      state.items = state.items.filter((i) => i.id !== id);
+      persistState("Запись удалена.");
+      renderAll();
+    }
+
+    function openHobbyModal(id = null) {
+      editingId = id || null;
+      const modal = document.getElementById("hobbyModal");
+      const titleEl = document.getElementById("modalTitle");
+
+      if (editingId) {
+        const item = state.items.find((i) => i.id === editingId);
+        if (!item) return;
+        titleEl.textContent = "Редактировать увлечение";
+        document.getElementById("hobbyName").value = item.name || "";
+        document.getElementById("hobbyCategory").value = item.category || "auto";
+        document.getElementById("hobbyHoursSpent").value = item.hoursSpent ?? 0;
+        document.getElementById("hobbyHoursGoal").value = item.hoursGoal ?? 10;
+        document.getElementById("hobbyCost").value = item.cost ?? 0;
+        document.getElementById("hobbyNotes").value = item.notes || "";
+      } else {
+        titleEl.textContent = "Новое увлечение / сессия";
+        document.getElementById("hobbyName").value = "";
+        document.getElementById("hobbyCategory").value = activeCategory !== "all" ? activeCategory : "auto";
+        document.getElementById("hobbyHoursSpent").value = 1;
+        document.getElementById("hobbyHoursGoal").value = 10;
+        document.getElementById("hobbyCost").value = 0;
+        document.getElementById("hobbyNotes").value = "";
+      }
+
+      modal.classList.add("active");
+    }
+
+    function closeHobbyModal() {
+      editingId = null;
+      document.getElementById("hobbyModal").classList.remove("active");
+    }
+
+    function saveHobbyItem() {
+      const name = document.getElementById("hobbyName").value.trim();
+      if (!name) {
+        coreToast("Укажи название увлечения или сессии.", "danger");
+        return;
+      }
+
+      const payload = {
+        name,
+        category: document.getElementById("hobbyCategory").value,
+        hoursSpent: Math.max(0, Number(document.getElementById("hobbyHoursSpent").value) || 0),
+        hoursGoal: Math.max(1, Number(document.getElementById("hobbyHoursGoal").value) || 1),
+        cost: Math.max(0, Number(document.getElementById("hobbyCost").value) || 0),
+        notes: document.getElementById("hobbyNotes").value.trim(),
+        updatedAt: Date.now()
+      };
+
+      if (editingId) {
+        const idx = state.items.findIndex((i) => i.id === editingId);
+        if (idx !== -1) {
+          state.items[idx] = { ...state.items[idx], ...payload };
+          if (state.items[idx].hoursSpent >= state.items[idx].hoursGoal) {
+            state.items[idx].completed = true;
+          }
+        }
+      } else {
+        state.items.unshift({
+          id: "hb_" + Date.now(),
+          ...payload,
+          completed: payload.hoursSpent >= payload.hoursGoal
+        });
+      }
+
+      closeHobbyModal();
+      persistState("Данные по увлечениям сохранены.");
+      renderAll();
+    }
+
+    function renderAll() {
+      renderKPIs();
+      populateTimerSelect();
+      renderPrepChecklist();
+      renderHobbies();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      buildSunoPrompt();
+      refreshTimerDisplay();
+      renderAll();
+
+      CoreDB.watch(HOBBIES_PATH, (remoteData) => {
+        if (remoteData) {
+          state = normalizeState(remoteData);
+          renderAll();
+        }
+      }, DEFAULT_STATE);
+    });
+  </script>
+</body>
+</html>
