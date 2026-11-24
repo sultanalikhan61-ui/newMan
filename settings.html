@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Настройки</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/core.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/core.js"></script>
+
+  <style>
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .dot.warn { background: var(--gold); }
+    .dot.err { background: var(--red); }
+
+    .storage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .storage-item {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .storage-key {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .storage-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .danger-card {
+      border-color: rgba(217, 4, 41, 0.45);
+      background: linear-gradient(135deg, rgba(217, 4, 41, 0.06), var(--surface));
+    }
+
+    .file-drop-label {
+      display: block;
+      background: var(--elevated);
+      border: 1px dashed var(--gold);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--gold);
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .file-drop-label input {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-nav">
+    <a href="index.html" class="back-btn">←</a>
+    <div class="page-title">Настройки</div>
+    <div class="nav-badge" id="navStorageSize">0 КБ</div>
+  </header>
+
+  <main class="content">
+
+    <!-- 1. СТАТУС СИСТЕМЫ И СИНХРОНИЗАЦИИ -->
+    <section class="card">
+      <div class="section-title">
+        <span>🔌 Состояние ядра и синхронизации</span>
+        <span class="status-pill" id="firebaseStatusPill">
+          <span class="dot warn" id="firebaseStatusDot"></span>
+          <span id="firebaseStatusText">ПРОВЕРКА...</span>
+        </span>
+      </div>
+
+      <p style="font-size:0.88rem; color:#ccc; margin-bottom:12px;">
+        Данные пишутся одновременно в <strong>localStorage</strong> (мгновенный доступ на телефоне и офлайн) и в <strong>Firebase Realtime Database</strong>.
+      </p>
+
+      <div class="storage-grid" id="localKeysOverview"></div>
+    </section>
+
+    <!-- 2. БАЗОВЫЕ ЦЕЛИ И ПАРАМЕТРЫ СМЕН -->
+    <div class="grid-2">
+
+      <section class="card">
+        <div class="section-title">
+          <span>🎯 Ключевые цели и дедлайн</span>
+        </div>
+
+        <div class="input-group">
+          <label for="cfgDeadline">Дата дедлайна</label>
+          <input type="date" id="cfgDeadline" class="input-field" value="2026-12-16">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgDebtTarget">Приоритетный долг к закрытию (тг)</label>
+          <input type="number" step="1000" min="0" id="cfgDebtTarget" class="input-field num" value="130000">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgCarGoal">Цель: новая машина + ГБО (тг)</label>
+          <input type="number" step="50000" min="0" id="cfgCarGoal" class="input-field num" value="8000000">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgSleepGoal">Цель по сну (часов)</label>
+          <input type="number" step="0.5" min="4" max="12" id="cfgSleepGoal" class="input-field num" value="7.0">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgWaterGoal">Дневная норма воды (мл)</label>
+          <input type="number" step="100" min="1000" max="6000" id="cfgWaterGoal" class="input-field num" value="2500">
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <span>🚕 Параметры смен за рулём</span>
+        </div>
+
+        <div class="input-row">
+          <label for="cfgShiftHours">Средняя смена (часов)</label>
+          <input type="number" step="0.5" min="1" max="24" id="cfgShiftHours" class="input-field num" value="12">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgAvgShiftIncome">Средний доход за смену (тг)</label>
+          <input type="number" step="500" min="0" id="cfgAvgShiftIncome" class="input-field num" value="25000">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgRentPerDay">Аренда авто в день (тг)</label>
+          <input type="number" step="500" min="0" id="cfgRentPerDay" class="input-field num" value="8000">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgFuelPerDay">Топливо / ГБО в день (тг)</label>
+          <input type="number" step="500" min="0" id="cfgFuelPerDay" class="input-field num" value="4500">
+        </div>
+
+        <div class="input-row">
+          <label for="cfgDailyFloor">Личный минимум в день (еда, связь, прочее)</label>
+          <input type="number" step="500" min="0" id="cfgDailyFloor" class="input-field num" value="3500">
+        </div>
+      </section>
+
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <button class="btn btn-gold" type="button" onclick="saveSettings()">Сохранить настройки в ядро</button>
+    </div>
+
+    <!-- 3. РЕЗЕРВНОЕ КОПИРОВАНИЕ (ЭКСПОРТ / ИМПОРТ JSON) -->
+    <section class="card">
+      <div class="section-title">
+        <span>💾 Резервная копия (JSON)</span>
+        <span style="font-size:0.75rem; color:var(--gold);">OFFLINE / BACKUP</span>
+      </div>
+
+      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:12px;">
+        Скачай полный слепок всех настроек, увлечений, здоровья и логов из <code>localStorage</code> в файл или восстанови их из сохранённого JSON.
+      </p>
+
+      <div class="grid-2" style="gap:12px;">
+        <button class="btn btn-green" type="button" onclick="exportBackupJson()">Скачать бэкап (.json)</button>
+        <label class="file-drop-label" style="margin-top:0;">
+          Загрузить бэкап (.json)
+          <input type="file" id="backupFileInput" accept=".json,application/json" onchange="importBackupJson(event)">
+        </label>
+      </div>
+    </section>
+
+    <!-- 4. ОПАСНАЯ ЗОНА -->
+    <section class="card danger-card">
+      <div class="section-title" style="color:var(--red);">
+        <span>⚠️ Опасная зона</span>
+      </div>
+
+      <p style="font-size:0.86rem; color:#ccc; margin-bottom:14px;">
+        Действия ниже удаляют или сбрасывают данные. Используй только осознанно.
+      </p>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <button class="btn btn-dark btn-sm" type="button" onclick="clearModuleData('man_hobbies', 'Увлечения')">Очистить увлечения</button>
+        <button class="btn btn-dark btn-sm" type="button" onclick="clearModuleData('man_health', 'Здоровье')">Очистить здоровье</button>
+        <button class="btn btn-red btn-sm" type="button" onclick="wipeLocalCache()">Сбросить локальный кэш</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const SETTINGS_PATH = "man_settings";
+
+    const DEFAULT_SETTINGS = {
+      deadline: "2026-12-16",
+      debtTarget: 130000,
+      carGoal: 8000000,
+      sleepGoal: 7.0,
+      waterGoal: 2500,
+      shiftHours: 12,
+      avgShiftIncome: 25000,
+      rentPerDay: 8000,
+      fuelPerDay: 4500,
+      dailyFloor: 3500,
+      updatedAt: Date.now()
+    };
+
+    let settingsState = { ...DEFAULT_SETTINGS };
+
+    function renderSettingsForm() {
+      document.getElementById("cfgDeadline").value = settingsState.deadline || "2026-12-16";
+      document.getElementById("cfgDebtTarget").value = settingsState.debtTarget ?? 130000;
+      document.getElementById("cfgCarGoal").value = settingsState.carGoal ?? 8000000;
+      document.getElementById("cfgSleepGoal").value = settingsState.sleepGoal ?? 7.0;
+      document.getElementById("cfgWaterGoal").value = settingsState.waterGoal ?? 2500;
+      document.getElementById("cfgShiftHours").value = settingsState.shiftHours ?? 12;
+      document.getElementById("cfgAvgShiftIncome").value = settingsState.avgShiftIncome ?? 25000;
+      document.getElementById("cfgRentPerDay").value = settingsState.rentPerDay ?? 8000;
+      document.getElementById("cfgFuelPerDay").value = settingsState.fuelPerDay ?? 4500;
+      document.getElementById("cfgDailyFloor").value = settingsState.dailyFloor ?? 3500;
+    }
+
+    function saveSettings() {
+      settingsState = {
+        deadline: document.getElementById("cfgDeadline").value || "2026-12-16",
+        debtTarget: Math.max(0, Number(document.getElementById("cfgDebtTarget").value) || 0),
+        carGoal: Math.max(0, Number(document.getElementById("cfgCarGoal").value) || 0),
+        sleepGoal: Math.max(1, Number(document.getElementById("cfgSleepGoal").value) || 7.0),
+        waterGoal: Math.max(500, Number(document.getElementById("cfgWaterGoal").value) || 2500),
+        shiftHours: Math.max(1, Number(document.getElementById("cfgShiftHours").value) || 12),
+        avgShiftIncome: Math.max(0, Number(document.getElementById("cfgAvgShiftIncome").value) || 0),
+        rentPerDay: Math.max(0, Number(document.getElementById("cfgRentPerDay").value) || 0),
+        fuelPerDay: Math.max(0, Number(document.getElementById("cfgFuelPerDay").value) || 0),
+        dailyFloor: Math.max(0, Number(document.getElementById("cfgDailyFloor").value) || 0),
+        updatedAt: Date.now()
+      };
+
+      // Синхронизируем ключевые цели с веткой здоровья, если она уже существует
+      const existingHealth = CoreDB.getLocal("man_health");
+      if (existingHealth && typeof existingHealth === "object") {
+        existingHealth.waterGoal = settingsState.waterGoal;
+        existingHealth.sleepGoal = settingsState.sleepGoal;
+        CoreDB.save("man_health", existingHealth);
+      }
+
+      CoreDB.save(SETTINGS_PATH, settingsState).then(() => {
+        triggerVictoryFlash();
+        coreToast("Настройки сохранены в localStorage и Firebase.", "gold");
+        renderStorageOverview();
+      });
+    }
+
+    function checkFirebaseConnection() {
+      const dot = document.getElementById("firebaseStatusDot");
+      const text = document.getElementById("firebaseStatusText");
+
+      if (typeof db === "undefined" || !db) {
+        dot.className = "dot err";
+        text.textContent = "ТОЛЬКО LOCALSTORAGE";
+        return;
+      }
+
+      db.ref(".info/connected").on("value", (snap) => {
+        const connected = snap.val() === true;
+        if (connected) {
+          dot.className = "dot";
+          text.textContent = "FIREBASE ONLINE";
+        } else {
+          dot.className = "dot warn";
+          text.textContent = "КЭШ / ОФЛАЙН";
+        }
+      });
+    }
+
+    function renderStorageOverview() {
+      const container = document.getElementById("localKeysOverview");
+      const keys = [];
+      let totalBytes = 0;
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("the_core_")) {
+          const val = localStorage.getItem(k) || "";
+          const bytes = new Blob([val]).size;
+          totalBytes += bytes;
+          keys.push({ key: k, bytes });
+        }
+      }
+
+      keys.sort((a, b) => a.key.localeCompare(b.key));
+      document.getElementById("navStorageSize").textContent = `${(totalBytes / 1024).toFixed(1)} КБ`;
+
+      if (!keys.length) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem;">Локальных ключей пока нет.</div>`;
+        return;
+      }
+
+      container.innerHTML = keys.map((item) => `
+        <div class="storage-item">
+          <div class="storage-key">${item.key}</div>
+          <div class="storage-meta">Размер: ${item.bytes} Б</div>
+        </div>
+      `).join("");
+    }
+
+    function exportBackupJson() {
+      const dump = {
+        exportedAt: new Date().toISOString(),
+        app: "THE CORE",
+        data: {}
+      };
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("the_core_")) {
+          try {
+            dump.data[k] = JSON.parse(localStorage.getItem(k));
+          } catch (e) {
+            dump.data[k] = localStorage.getItem(k);
+          }
+        }
+      }
+
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `the-core-backup-${getTodayStr()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      coreToast("Резервная копия JSON скачана.", "gold");
+    }
+
+    function importBackupJson(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || "{}"));
+          const entries = parsed && parsed.data && typeof parsed.data === "object"
+            ? parsed.data
+            : parsed;
+
+          if (!entries || typeof entries !== "object") {
+            coreToast("Неверный формат JSON-файла.", "danger");
+            return;
+          }
+
+          let restoredCount = 0;
+          Object.entries(entries).forEach(([fullKey, val]) => {
+            if (fullKey.startsWith("the_core_")) {
+              localStorage.setItem(fullKey, JSON.stringify(val));
+              const dbPath = fullKey.replace(/^the_core_/, "").replace(/_/g, "/");
+              if (db && dbPath) {
+                db.ref(dbPath).set(val).catch(() => {});
+              }
+              restoredCount += 1;
+            }
+          });
+
+          logVictory(
+            "Восстановлена резервная копия THE CORE",
+            `Импортировано веток: ${restoredCount} из файла ${file.name}.`,
+            "personal",
+            false
+          );
+          coreToast(`Восстановлено веток: ${restoredCount}`, "gold");
+          setTimeout(() => window.location.reload(), 600);
+        } catch (err) {
+          coreToast("Ошибка чтения JSON: проверь структуру файла.", "danger");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function clearModuleData(dbPath, title) {
+      if (!confirm(`Очистить данные модуля «${title}» в базе и локальном кэше?`)) return;
+      const localKey = dbPath.replace(/\//g, "_");
+      localStorage.removeItem(`the_core_${localKey}`);
+      CoreDB.remove(dbPath).then(() => {
+        coreToast(`Раздел «${title}» очищен.`, "gold");
+        renderStorageOverview();
+      });
+    }
+
+    function wipeLocalCache() {
+      if (!confirm("Сбросить весь локальный кэш THE CORE на этом устройстве?")) return;
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("the_core_")) toRemove.push(k);
+      }
+      toRemove.forEach((k) => localStorage.removeItem(k));
+      coreToast("Локальный кэш очищен.", "gold");
+      renderStorageOverview();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderSettingsForm();
+      renderStorageOverview();
+      checkFirebaseConnection();
+
+      CoreDB.watch(SETTINGS_PATH, (remote) => {
+        if (remote && typeof remote === "object") {
+          settingsState = { ...DEFAULT_SETTINGS, ...remote };
+          renderSettingsForm();
+          renderStorageOverview();
+        }
+      }, DEFAULT_SETTINGS);
+    });
+  </script>
+</body>
+</html>
