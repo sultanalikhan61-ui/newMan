@@ -2,194 +2,237 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>THE CORE | Command Center v5.0</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE CORE | Change Log</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
+    /* =========================================
+       БАЗА СТИЛЕЙ
+       ========================================= */
     :root {
-      --bg-base: #050505; --bg-surface: #121212; --bg-surface-hover: #1a1a1a; --bg-elevated: #222222;
-      --border-color: #333333; --text-primary: #ffffff; --text-secondary: #a0a0a0; --text-muted: #666666;
-      --accent-red: #d90429; --accent-red-hover: #ef233c; --accent-gold: #d4af37; --accent-green: #2ed573; --accent-blue: #1e90ff;
-      --shadow-soft: 0 4px 20px rgba(0,0,0,0.6); --shadow-hard: 0 10px 40px rgba(0,0,0,0.9);
-      --font-main: 'Inter', sans-serif; --font-display: 'Playfair Display', serif;
+      --bg: #050505; --surface: #121212; --elevated: #1e1e1e; --border: #333;
+      --text: #fff; --text-muted: #888; 
+      --red: #d90429; --gold: #d4af37; --green: #2ed573; --blue: #1e90ff; --purple: #9b59b6;
+      --font: 'Inter', sans-serif; --display: 'Playfair Display', serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
-      background-color: var(--bg-base); color: var(--text-primary); font-family: var(--font-main); line-height: 1.5; min-height: 100vh; overflow-x: hidden;
-      background-image: radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.08) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 40%);
-    }
-    ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg-base); } ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-
-    /* УВЕДОМЛЕНИЯ */
-    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
-    .toast {
-      background: var(--accent-gold); color: #000; padding: 15px 25px; border-radius: 8px; font-weight: 800; font-size: 0.9rem;
-      box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4); animation: slideInRight 0.4s ease forwards;
-      display: flex; align-items: center; gap: 10px;
-    }
-    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-    /* LAYOUT */
-    .app-container { display: flex; flex-direction: column; height: 100vh; max-width: 1200px; margin: 0 auto; }
-    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
-    .brand { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-    .brand span { color: var(--accent-red); }
-    .main-content { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
-    .tab-section { display: none; animation: fadeIn 0.4s ease; } .tab-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(18, 18, 18, 0.98); backdrop-filter: blur(15px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0 15px 0; z-index: 100; }
-    .nav-btn { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: 0.2s; width: 20%; }
-    .nav-btn svg { width: 22px; height: 22px; fill: currentColor; } .nav-btn.active { color: var(--accent-red); }
-
-    /* UI */
-    .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
-    .card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; transition: 0.3s; }
-    .card:hover { border-color: #555; box-shadow: var(--shadow-hard); }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color); }
-    .card-title { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; min-height: 100vh; }
     
-    .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .input-group label { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
-    .input-field { background: var(--bg-elevated); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 15px; border-radius: 8px; width: 140px; text-align: right; font-family: var(--font-main); font-weight: 700; font-size: 1rem; }
-    .input-field:focus { outline: none; border-color: var(--accent-red); }
-    .input-field.wide { width: 100%; text-align: left; }
+    /* Навигация */
+    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5,5,5,0.9); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+    .back-btn { color: var(--gold); text-decoration: none; font-weight: 800; font-size: 1.2rem; transition: 0.2s; }
+    .back-btn:hover { color: #fff; }
+    .page-title { font-size: 1.2rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-family: var(--display); }
 
-    .btn { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
-    .btn:hover { background: var(--border-color); } .btn-primary { background: var(--accent-red); border-color: var(--accent-red); } .btn-gold { background: var(--accent-gold); border-color: var(--accent-gold); color: #000; }
+    .content { padding: 20px; max-width: 900px; margin: 0 auto; padding-bottom: 100px; }
 
-    .progress-track { width: 100%; height: 12px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden; margin: 15px 0 5px 0; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-red), #ff4d4d); width: 0%; transition: width 0.4s ease; }
+    /* =========================================
+       ВЕРХНЯЯ ПАНЕЛЬ (СТАТИСТИКА И ФИЛЬТРЫ)
+       ========================================= */
+    .stats-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); padding: 15px 20px; border-radius: 12px; text-align: center; }
+    .stat-val { font-size: 2rem; font-weight: 900; color: var(--gold); font-family: var(--display); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+
+    .controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+    .search-box { display: flex; gap: 10px; }
+    .search-input { flex: 1; background: var(--elevated); border: 1px solid var(--border); color: var(--text); padding: 12px 20px; border-radius: 8px; font-family: var(--font); }
+    .search-input:focus { outline: none; border-color: var(--gold); }
     
-    .result-box { background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
-    .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-    .result-val { font-weight: 800; color: var(--accent-gold); } .result-val.red { color: var(--accent-red); } .result-val.green { color: var(--accent-green); }
+    .filters { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .filters::-webkit-scrollbar { height: 4px; }
+    .filters::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+    .filter-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
+    .filter-btn:hover:not(.active) { border-color: var(--text); color: var(--text); }
 
-    /* JOURNAL */
-    .journal-list { display: flex; flex-direction: column; gap: 15px; }
-    .journal-card { background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 20px; cursor: pointer; transition: 0.2s; display: flex; align-items: flex-start; gap: 15px; }
-    .journal-card:hover { border-color: var(--accent-gold); transform: translateX(5px); }
-    .journal-sticker { font-size: 2rem; line-height: 1; }
-    .journal-content { flex: 1; } .journal-date { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 5px; }
-    .journal-full-text { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); color: var(--text-secondary); font-size: 0.9rem; white-space: pre-wrap; }
-    .journal-card.open .journal-full-text { display: block; }
-
-    /* MODAL */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 999; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .modal-overlay.active { display: flex; }
-    .modal-content { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 600px; padding: 25px; box-shadow: var(--shadow-hard); }
-    
-    .sticker-selector { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
-    .sticker-btn { font-size: 2rem; background: var(--bg-elevated); border: 2px solid transparent; border-radius: 12px; width: 60px; height: 60px; cursor: pointer; transition: 0.2s; }
-    .sticker-btn.selected { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.1); transform: scale(1.1); }
-    .journal-textarea { width: 100%; height: 150px; background: var(--bg-elevated); border: 1px solid var(--border-color); color: var(--text-primary); padding: 15px; border-radius: 8px; font-family: var(--font-main); resize: none; margin-bottom: 15px; }
-
-    @media (min-width: 768px) {
-      .bottom-nav { width: 90px; height: 100vh; flex-direction: column; justify-content: flex-start; padding-top: 100px; right: 0; left: auto; border-top: none; border-left: 1px solid var(--border-color); }
-      .nav-btn { width: 100%; margin-bottom: 25px; } .nav-btn span { display: block; margin-top: 5px; }
-      .main-content { padding-right: 130px; } .app-container { max-width: 1400px; }
+    /* =========================================
+       ТАЙМЛАЙН
+       ========================================= */
+    .timeline { position: relative; padding-left: 30px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(to bottom, var(--gold), var(--border), transparent);
     }
+
+    .log-item { position: relative; margin-bottom: 30px; animation: slideIn 0.3s ease forwards; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    
+    /* Точка на линии */
+    .log-item::before {
+      content: ''; position: absolute; left: -27px; top: 5px; width: 12px; height: 12px;
+      background: var(--surface); border: 3px solid var(--gold); border-radius: 50%;
+      z-index: 2; transition: 0.3s;
+    }
+    .log-item.major::before { border-color: var(--red); background: var(--red); box-shadow: 0 0 15px var(--red); }
+
+    .log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; transition: 0.3s; }
+    .log-card:hover { border-color: #555; transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .log-item.major .log-card { border-color: rgba(217, 4, 41, 0.4); background: linear-gradient(135deg, rgba(217,4,41,0.05) 0%, var(--surface) 100%); }
+
+    .log-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .log-date { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; }
+    
+    .log-tag { font-size: 0.7rem; padding: 3px 10px; border-radius: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+    .tag-finance { background: rgba(46, 213, 115, 0.2); color: var(--green); }
+    .tag-health { background: rgba(255, 159, 243, 0.2); color: #ff9ff3; }
+    .tag-relationship { background: rgba(155, 89, 182, 0.2); color: var(--purple); }
+    .tag-work { background: rgba(30, 144, 255, 0.2); color: var(--blue); }
+    .tag-personal { background: rgba(212, 175, 55, 0.2); color: var(--gold); }
+
+    .log-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .log-desc { font-size: 0.95rem; color: #bbb; line-height: 1.5; white-space: pre-wrap; }
+    
+    .delete-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #555; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
+    .delete-btn:hover { color: var(--red); }
+
+    /* =========================================
+       КНОПКА ДОБАВЛЕНИЯ (FAB)
+       ========================================= */
+    .fab {
+      position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+      background: var(--gold); color: #000; border-radius: 50%; display: flex;
+      justify-content: center; align-items: center; font-size: 2rem; border: none;
+      cursor: pointer; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); transition: 0.3s; z-index: 90;
+    }
+    .fab:hover { transform: scale(1.1) rotate(90deg); box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); }
+
+    /* =========================================
+       МОДАЛЬНОЕ ОКНО
+       ========================================= */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; padding: 30px; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    
+    .input-group { margin-bottom: 20px; }
+    .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
+    .input-field { width: 100%; background: var(--elevated); border: 1px solid var(--border); color: var(--text); padding: 12px 15px; border-radius: 8px; font-family: var(--font); font-size: 1rem; }
+    .input-field:focus { outline: none; border-color: var(--gold); }
+    .textarea { height: 120px; resize: none; }
+    
+    .category-select { display: flex; flex-wrap: wrap; gap: 10px; }
+    .cat-radio { display: none; }
+    .cat-label { padding: 8px 15px; border-radius: 20px; background: var(--elevated); border: 1px solid var(--border); cursor: pointer; font-size: 0.8rem; font-weight: 700; transition: 0.2s; }
+    .cat-radio:checked + .cat-label { background: var(--gold); color: #000; border-color: var(--gold); }
+
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; cursor: pointer; }
+    .checkbox-group input { width: 20px; height: 20px; accent-color: var(--red); }
+    .checkbox-group label { font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+
+    .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+    .btn { flex: 1; padding: 14px; border-radius: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; border: none; transition: 0.2s; }
+    .btn-cancel { background: var(--elevated); color: var(--text); }
+    .btn-save { background: var(--gold); color: #000; }
+    .btn:hover { opacity: 0.8; }
+
+    /* Пустое состояние */
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 4rem; margin-bottom: 15px; opacity: 0.5; }
   </style>
 </head>
 <body>
 
-<div class="toast-container" id="toastContainer"></div>
+<header class="top-nav">
+  <a href="index.html" class="back-btn">←</a>
+  <div class="page-title">Журнал Трансформации</div>
+  <div style="width:24px;"></div>
+</header>
 
-<div class="app-container">
-  <header class="top-nav">
-    <div class="brand">THE <span>CORE</span></div>
-    <div class="global-stats">
-      <div class="stat-item">Долг: <span id="navDebt">0</span> тг</div>
-      <a href="index.html" style="color: var(--accent-gold); text-decoration: none; font-weight: 800; margin-left: 10px; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 8px;">Её Сайт</a>
+<div class="content">
+
+  <!-- Статистика -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-val" id="totalLogsCount">0</div>
+      <div class="stat-label">Всего записей</div>
     </div>
-  </header>
-
-  <main class="main-content">
-    <!-- ВКЛАДКА 1: ШТАБ -->
-    <section id="tab-dashboard" class="tab-section active">
-      <div class="grid-container">
-        <div class="card gold-accent">
-          <div class="card-header"><div class="card-title">🎯 Текущий статус</div></div>
-          <div class="result-box">
-             <div class="result-row"><span>Тело кредита:</span> <span class="result-val red" id="dashBankDebt">0</span></div>
-             <div class="result-row"><span>Долги друзьям:</span> <span class="result-val red" id="dashFriendDebt">0</span></div>
-             <div class="result-row"><span>Выполнено смен:</span> <span class="result-val green" id="dashShifts">0</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ВКЛАДКА 2: ДНЕВНИК -->
-    <section id="tab-journal" class="tab-section">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📖 Мой Дневник</div>
-          <button class="btn btn-gold" onclick="openJournalModal()">+ Запись</button>
-        </div>
-        <div class="journal-list" id="journalList"></div>
-      </div>
-    </section>
-
-    <!-- ВКЛАДКА 3: ДОЛГИ -->
-    <section id="tab-debts" class="tab-section">
-      <div class="grid-container">
-        <div class="card">
-          <div class="card-header"><div class="card-title">🤝 Долги друзьям</div></div>
-          <div class="input-group">
-            <input type="text" id="newFriendName" class="input-field wide" placeholder="Имя">
-            <input type="number" id="newFriendSum" class="input-field" placeholder="Сумма">
-            <button class="btn btn-primary" onclick="addFriendDebt()">+</button>
-          </div>
-          <div id="friendDebtList"></div>
-        </div>
-        <div class="card gold-accent">
-          <div class="card-header"><div class="card-title">🏦 Банк</div></div>
-          <div class="input-group">
-            <label>Остаток:</label>
-            <input type="number" id="bankDebtAmount" class="input-field" oninput="updateBankDebt()">
-          </div>
-          <div class="progress-track"><div class="progress-fill gold" id="bankProgressBar"></div></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- МОДАЛКА ДНЕВНИКА -->
-  <div class="modal-overlay" id="journalModal">
-    <div class="modal-content">
-      <h2 style="margin-bottom: 20px; color: var(--accent-gold);">Новая запись</h2>
-      <div class="sticker-selector" id="stickerSelector">
-        <button class="sticker-btn" onclick="selectSticker(this, '🔥')">🔥</button>
-        <button class="sticker-btn" onclick="selectSticker(this, '💰')">💰</button>
-        <button class="sticker-btn" onclick="selectSticker(this, '⚔️')">⚔️</button>
-        <button class="sticker-btn" onclick="selectSticker(this, '🧠')">🧠</button>
-        <button class="sticker-btn" onclick="selectSticker(this, '💀')">💀</button>
-      </div>
-      <textarea class="journal-textarea" id="journalInput" placeholder="Что произошло?"></textarea>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn" onclick="document.getElementById('journalModal').classList.remove('active')">Отмена</button>
-        <button class="btn btn-gold" onclick="saveJournalEntry()">Сохранить</button>
-      </div>
+    <div class="stat-card">
+      <div class="stat-val" id="majorLogsCount">0</div>
+      <div class="stat-label">Мажорных побед</div>
     </div>
   </div>
 
-  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="switchTab('dashboard', this)"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Штаб</span></button>
-    <button class="nav-btn" onclick="switchTab('journal', this)"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7zm1-11h-2v3H8v2h3v3h2v-3h3v-2h-3V8z"/></svg><span>Дневник</span></button>
-    <button class="nav-btn" onclick="switchTab('debts', this)"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg><span>Долги</span></button>
-  </nav>
+  <!-- Поиск и Фильтры -->
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input" placeholder="Поиск по записям..." oninput="renderTimeline()">
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">Все</button>
+      <button class="filter-btn" onclick="setFilter('finance', this)">Финансы</button>
+      <button class="filter-btn" onclick="setFilter('health', this)">Здоровье</button>
+      <button class="filter-btn" onclick="setFilter('relationship', this)">Отношения</button>
+      <button class="filter-btn" onclick="setFilter('work', this)">Работа</button>
+      <button class="filter-btn" onclick="setFilter('personal', this)">Личное</button>
+    </div>
+  </div>
+
+  <!-- Сам Таймлайн -->
+  <div class="timeline" id="timelineContainer">
+    <!-- Сюда рендерятся карточки -->
+  </div>
+
+</div>
+
+<!-- Кнопка добавления -->
+<button class="fab" onclick="openModal()">+</button>
+
+<!-- Модалка -->
+<div class="modal" id="logModal">
+  <div class="modal-box">
+    <h2 style="margin-bottom: 25px; font-family: var(--display); color: var(--gold);">Новая запись</h2>
+    
+    <div class="input-group">
+      <label>Заголовок (Что произошло?)</label>
+      <input type="text" id="logTitle" class="input-field" placeholder="Например: Закрыл долг Абылаю">
+    </div>
+
+    <div class="input-group">
+      <label>Категория</label>
+      <div class="category-select">
+        <input type="radio" name="cat" id="cat-fin" value="finance" class="cat-radio" checked>
+        <label for="cat-fin" class="cat-label">💰 Финансы</label>
+
+        <input type="radio" name="cat" id="cat-heal" value="health" class="cat-radio">
+        <label for="cat-heal" class="cat-label">🫀 Здоровье</label>
+
+        <input type="radio" name="cat" id="cat-rel" value="relationship" class="cat-radio">
+        <label for="cat-rel" class="cat-label">💔 Отношения</label>
+
+        <input type="radio" name="cat" id="cat-work" value="work" class="cat-radio">
+        <label for="cat-work" class="cat-label">💼 Работа</label>
+
+        <input type="radio" name="cat" id="cat-pers" value="personal" class="cat-radio">
+        <label for="cat-pers" class="cat-label">🧠 Личное</label>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label>Описание (Детали, мысли)</label>
+      <textarea id="logDesc" class="input-field textarea" placeholder="Опиши свои эмоции или конкретные цифры..."></textarea>
+    </div>
+
+    <label class="checkbox-group">
+      <input type="checkbox" id="logMajor">
+      <label for="logMajor">🔥 Это мажорная победа (Выделить красным)</label>
+    </label>
+
+    <div class="btn-group">
+      <button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-save" onclick="saveLog()">Сохранить</button>
+    </div>
+  </div>
 </div>
 
 <script>
   /* ==========================================
-     FIREBASE CONFIG & LOGIC (CORE.HTML)
+     FIREBASE CONFIG
      ========================================== */
   const firebaseConfig = {
     apiKey: "AIzaSyDrPu0bv13jvnju8JJyHkgeRQcf66fDtlk",
@@ -199,176 +242,142 @@
   };
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const DB_CHANGELOG = db.ref('man_changelog');
 
-  // Глобальные данные
-  let coreData = {
-    stats: { bankDebt: 0, friendDebt: 0, shifts: 0, goalPercent: 0, streak: 0 },
-    debts: [],
-    journal: []
-  };
+  // Состояние
+  let allLogs = [];
+  let currentFilter = 'all';
+  let searchQuery = '';
 
-  let currentSticker = '⚔️';
-
-  // --- 1. СЛУШАЕМ ЕЁ ВИЗИТЫ (УВЕДОМЛЕНИЕ) ---
-  db.ref('love_site/last_visit').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      showToast(`📖 Она зашла на сайт! (${data.time})`);
+  // Слушаем базу
+  DB_CHANGELOG.on('value', (snap) => {
+    if(snap.exists()) {
+      const data = snap.val();
+      // Преобразуем объект в массив и сортируем по дате (новые сверху)
+      allLogs = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+      allLogs.sort((a, b) => b.timestamp - a.timestamp);
+    } else {
+      allLogs = [];
     }
+    updateStats();
+    renderTimeline();
   });
 
-  // --- 2. СИНХРОНИЗАЦИЯ С БАЗОЙ ---
-  function syncToFirebase() {
-    db.ref('core_site').set(coreData);
-    // Отправляем статус для её сайта
-    db.ref('core_site/stats').set({
-      bankDebt: coreData.stats.bankDebt,
-      friendDebt: coreData.stats.friendDebt,
-      shifts: coreData.stats.shifts,
-      goalPercent: coreData.stats.goalPercent,
-      streak: coreData.stats.streak
+  /* ==========================================
+     ЛОГИКА РЕНДЕРА ТАЙМЛАЙНА
+     ========================================== */
+  function renderTimeline() {
+    const container = document.getElementById('timelineContainer');
+    searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    
+    // Фильтруем
+    const filtered = allLogs.filter(log => {
+      const matchCategory = currentFilter === 'all' || log.category === currentFilter;
+      const matchSearch = log.title.toLowerCase().includes(searchQuery) || log.desc.toLowerCase().includes(searchQuery);
+      return matchCategory && matchSearch;
+    });
+
+    if(filtered.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📜</div><h3>Здесь пока пусто</h3><p>Добавь свою первую победу или изменение.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    
+    filtered.forEach(log => {
+      const dateObj = new Date(log.timestamp);
+      const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      
+      const isMajor = log.major ? 'major' : '';
+      
+      let tagClass = 'tag-personal';
+      let tagName = 'Личное';
+      if(log.category === 'finance') { tagClass = 'tag-finance'; tagName = 'Финансы'; }
+      if(log.category === 'health') { tagClass = 'tag-health'; tagName = 'Здоровье'; }
+      if(log.category === 'relationship') { tagClass = 'tag-relationship'; tagName = 'Отношения'; }
+      if(log.category === 'work') { tagClass = 'tag-work'; tagName = 'Работа'; }
+
+      const card = document.createElement('div');
+      card.className = `log-item ${isMajor}`;
+      card.innerHTML = `
+        <div class="log-card">
+          <button class="delete-btn" onclick="deleteLog('${log.id}')" title="Удалить">✖</button>
+          <div class="log-header">
+            <div class="log-date">${dateStr}</div>
+            <div class="log-tag ${tagClass}">${tagName}</div>
+          </div>
+          <div class="log-title">${log.title}</div>
+          <div class="log-desc">${log.desc}</div>
+        </div>
+      `;
+      container.appendChild(card);
     });
   }
 
-  // Слушаем изменения из базы (на случай если откроешь на другом устройстве)
-  db.ref('core_site').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      coreData = data;
-      renderUI();
-    }
-  });
-
-  // --- 3. РЕНДЕР UI ---
-  function renderUI() {
-    // Штаб
-    document.getElementById('dashBankDebt').innerText = (coreData.stats.bankDebt || 0).toLocaleString() + ' тг';
-    document.getElementById('dashFriendDebt').innerText = (coreData.stats.friendDebt || 0).toLocaleString() + ' тг';
-    document.getElementById('dashShifts').innerText = coreData.stats.shifts || 0;
-    document.getElementById('navDebt').innerText = ((coreData.stats.bankDebt || 0) + (coreData.stats.friendDebt || 0)).toLocaleString();
-
-    // Банк
-    if(document.getElementById('bankDebtAmount')) document.getElementById('bankDebtAmount').value = coreData.stats.bankDebt || 0;
-
-    // Долги
-    const fList = document.getElementById('friendDebtList');
-    if(fList) {
-      fList.innerHTML = '';
-      let totalF = 0;
-      if (coreData.debts) {
-        coreData.debts.forEach((d, i) => {
-          totalF += d.sum;
-          fList.innerHTML += `<div class="debt-item" style="display:flex; justify-content:space-between; margin-bottom:10px; background:#222; padding:10px; border-radius:8px;">
-            <span>${d.name}</span>
-            <span style="color:var(--accent-red); font-weight:800;">${d.sum.toLocaleString()} тг</span>
-            <button onclick="deleteDebt(${i})" style="background:none; border:none; color:green; cursor:pointer;">✔</button>
-          </div>`;
-        });
-      }
-    }
-
-    // Дневник
-    const jList = document.getElementById('journalList');
-    if(jList) {
-      jList.innerHTML = '';
-      if (coreData.journal) {
-        coreData.journal.forEach((entry, i) => {
-          const div = document.createElement('div');
-          div.className = 'journal-card';
-          div.onclick = () => div.classList.toggle('open');
-          div.innerHTML = `
-            <div class="journal-sticker">${entry.sticker}</div>
-            <div class="journal-content">
-              <div class="journal-date">${entry.date}</div>
-              <div style="font-size:0.9rem; font-weight:500;">${entry.summary}</div>
-              <div class="journal-full-text">${entry.text}</div>
-            </div>
-          `;
-          jList.appendChild(div);
-        });
-      }
-    }
+  /* ==========================================
+     СТАТИСТИКА
+     ========================================== */
+  function updateStats() {
+    document.getElementById('totalLogsCount').innerText = allLogs.length;
+    const majors = allLogs.filter(l => l.major).length;
+    document.getElementById('majorLogsCount').innerText = majors;
   }
 
-  // --- 4. ДЕЙСТВИЯ ---
-  function updateBankDebt() {
-    const val = parseFloat(document.getElementById('bankDebtAmount').value) || 0;
-    coreData.stats.bankDebt = val;
-    syncToFirebase();
-  }
-
-  function addFriendDebt() {
-    const name = document.getElementById('newFriendName').value;
-    const sum = parseFloat(document.getElementById('newFriendSum').value);
-    if (name && sum > 0) {
-      if(!coreData.debts) coreData.debts = [];
-      coreData.debts.push({ name, sum, date: new Date().toLocaleDateString('ru-RU') });
-      coreData.stats.friendDebt = (coreData.stats.friendDebt || 0) + sum;
-      document.getElementById('newFriendName').value = '';
-      document.getElementById('newFriendSum').value = '';
-      syncToFirebase();
-    }
-  }
-
-  function deleteDebt(index) {
-    const removed = coreData.debts.splice(index, 1)[0];
-    coreData.stats.friendDebt = (coreData.stats.friendDebt || 0) - removed.sum;
-    syncToFirebase();
-  }
-
-  // --- 5. ДНЕВНИК ---
-  function openJournalModal() { document.getElementById('journalModal').classList.add('active'); }
-  
-  function selectSticker(btn, emoji) {
-    document.querySelectorAll('.sticker-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    currentSticker = emoji;
-  }
-
-  function saveJournalEntry() {
-    const text = document.getElementById('journalInput').value.trim();
-    if (!text) return;
-    
-    const today = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-    if(!coreData.journal) coreData.journal = [];
-    
-    coreData.journal.unshift({
-      date: today, sticker: currentSticker, text: text, summary: "Запись сохранена в облако."
-    });
-
-    document.getElementById('journalInput').value = '';
-    document.getElementById('journalModal').classList.remove('active');
-    syncToFirebase();
-  }
-
-  // --- 6. ВСПОМОГАТЕЛЬНЫЕ ---
-  function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
+  /* ==========================================
+     УПРАВЛЕНИЕ ФИЛЬТРАМИ
+     ========================================== */
+  function setFilter(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    currentFilter = cat;
+    renderTimeline();
   }
 
-  function showToast(msg) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 5000);
+  /* ==========================================
+     МОДАЛКА И СОХРАНЕНИЕ
+     ========================================== */
+  function openModal() {
+    document.getElementById('logModal').classList.add('active');
+    document.getElementById('logTitle').value = '';
+    document.getElementById('logDesc').value = '';
+    document.getElementById('logMajor').checked = false;
+    document.getElementById('cat-fin').checked = true;
   }
 
-  // Инициализация
-  window.addEventListener('DOMContentLoaded', () => {
-    // Если в базе пусто, ставим дефолт
-    setTimeout(() => {
-        if(!coreData.stats.bankDebt) {
-            coreData.stats.bankDebt = 1500000;
-            coreData.stats.friendDebt = 20000;
-            syncToFirebase();
-        }
-    }, 2000);
-  });
+  function closeModal() {
+    document.getElementById('logModal').classList.remove('active');
+  }
+
+  function saveLog() {
+    const title = document.getElementById('logTitle').value.trim();
+    const desc = document.getElementById('logDesc').value.trim();
+    const major = document.getElementById('logMajor').checked;
+    
+    // Получаем выбранную категорию
+    const catRadios = document.getElementsByName('cat');
+    let category = 'personal';
+    for(let r of catRadios) { if(r.checked) category = r.value; }
+
+    if(!title) return alert("Введи заголовок!");
+
+    const newLog = {
+      title: title,
+      desc: desc,
+      category: category,
+      major: major,
+      timestamp: Date.now()
+    };
+
+    DB_CHANGELOG.push(newLog).then(() => {
+      closeModal();
+    });
+  }
+
+  function deleteLog(id) {
+    if(confirm("Удалить эту запись из истории?")) {
+      DB_CHANGELOG.child(id).remove();
+    }
+  }
 
 </script>
 </body>
