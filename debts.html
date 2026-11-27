@@ -6,14 +6,10 @@
   <title>THE CORE | Debt Killer</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
-    /* =========================================
-       БАЗА СТИЛЕЙ (Тёмная тема)
-       ========================================= */
     :root {
       --bg: #050505; --surface: #121212; --elevated: #1e1e1e; --border: #333;
       --text: #fff; --text-muted: #888; 
@@ -23,7 +19,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; min-height: 100vh; }
     
-    /* Навигация */
     .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5,5,5,0.9); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
     .back-btn { color: var(--gold); text-decoration: none; font-weight: 800; font-size: 1.2rem; transition: 0.2s; }
     .back-btn:hover { color: #fff; }
@@ -31,9 +26,6 @@
 
     .content { padding: 20px; max-width: 1000px; margin: 0 auto; padding-bottom: 100px; }
 
-    /* =========================================
-       ВЕРХНЯЯ ПАНЕЛЬ (ОБЩИЙ ДОЛГ)
-       ========================================= */
     .total-panel {
       background: linear-gradient(135deg, rgba(217, 4, 41, 0.15) 0%, rgba(0,0,0,0) 100%);
       border: 1px solid rgba(217, 4, 41, 0.3);
@@ -46,9 +38,6 @@
     .total-label { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 10px; }
     .total-val { font-size: 3.5rem; font-weight: 900; color: var(--red); font-family: var(--mono); text-shadow: 0 0 20px rgba(217,4,41,0.4); }
     
-    /* =========================================
-       ТАБЫ (БАНК / ДРУЗЬЯ)
-       ========================================= */
     .tabs { display: flex; background: var(--surface); border-radius: 12px; padding: 5px; border: 1px solid var(--border); margin-bottom: 25px; }
     .tab-btn { flex: 1; padding: 15px; background: none; border: none; color: var(--text-muted); font-size: 1rem; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
     .tab-btn.active { background: var(--elevated); color: var(--text); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
@@ -57,9 +46,6 @@
     .pane.active { display: block; }
     @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* =========================================
-       КАРТОЧКИ ДОЛГОВ
-       ========================================= */
     .debt-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -79,22 +65,21 @@
     .debt-left { font-size: 1.8rem; font-weight: 900; color: var(--red); font-family: var(--mono); }
     .debt-monthly { font-size: 0.85rem; color: var(--gold); font-weight: 700; margin-top: 5px; }
 
-    /* Прогресс-бар */
     .progress-container { margin-bottom: 20px; }
     .progress-bar-bg { height: 12px; background: #000; border-radius: 6px; overflow: hidden; position: relative; }
     .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), #7bed9f); width: 0%; transition: width 0.5s ease; }
     .progress-text { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; font-weight: 600; }
 
-    /* Кнопки действий */
     .debt-actions { display: flex; gap: 10px; }
     .btn { background: var(--elevated); color: var(--text); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.85rem; flex: 1; text-align: center;}
     .btn:hover { background: var(--border); }
     .btn-pay { background: var(--green); border-color: var(--green); color: #000; }
     .btn-pay:hover { background: #26c267; box-shadow: 0 0 15px rgba(46, 213, 115, 0.4); }
+    .btn-edit { flex: 0 0 50px; color: var(--gold); border-color: rgba(212, 175, 55, 0.3); padding: 12px 0; }
+    .btn-edit:hover { background: rgba(212, 175, 55, 0.1); border-color: var(--gold); }
     .btn-delete { flex: 0 0 50px; color: var(--red); border-color: rgba(217, 4, 41, 0.3); }
     .btn-delete:hover { background: rgba(217, 4, 41, 0.1); border-color: var(--red); }
 
-    /* Кнопка добавления */
     .add-btn {
       display: flex; justify-content: center; align-items: center; gap: 10px;
       width: 100%; padding: 18px; background: var(--surface); border: 2px dashed var(--border);
@@ -102,9 +87,6 @@
     }
     .add-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.05); }
 
-    /* =========================================
-       МОДАЛЬНЫЕ ОКНА
-       ========================================= */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
     .modal.active { display: flex; }
     .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; padding: 30px; animation: slideUp 0.3s ease; }
@@ -121,9 +103,7 @@
     .btn-cancel { background: var(--elevated); color: var(--text); }
     .btn-confirm { background: var(--gold); color: #000; }
 
-    /* Инфо-блок */
     .info-box { background: rgba(30, 144, 255, 0.1); border-left: 4px solid var(--blue); padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.9rem; color: #ccc; line-height: 1.5; }
-
 
     .month-box { margin-bottom: 14px; }
     .progress-bar-fill.month { background: linear-gradient(90deg, var(--gold), #f1d56b); }
@@ -140,7 +120,6 @@
 
 <div class="content">
 
-  <!-- ОБЩИЙ ДОЛГ -->
   <div class="total-panel">
     <div class="total-label">Общий остаток долга</div>
     <div class="total-val" id="totalDebtDisplay">0 тг</div>
@@ -150,19 +129,16 @@
     <b>Правило:</b> Вноси платеж даже если это 1000 тенге. Каждый закрытый долг — это минус проценты и минус твоя тревога. Уничтожай долги от самого маленького к большому.
   </div>
 
-  <!-- ТАБЫ -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('bank', this)">🏦 Банки</button>
     <button class="tab-btn" onclick="switchTab('friends', this)">🤝 Друзья</button>
   </div>
 
-  <!-- ВКЛАДКА 1: БАНКИ -->
   <div id="pane-bank" class="pane active">
     <div id="bankListContainer"></div>
     <button class="add-btn" onclick="openModal('bankModal')">+ Добавить банковский кредит</button>
   </div>
 
-  <!-- ВКЛАДКА 2: ДРУЗЬЯ -->
   <div id="pane-friends" class="pane">
     <div id="friendListContainer"></div>
     <button class="add-btn" onclick="openModal('friendModal')">+ Добавить долг другу</button>
@@ -189,6 +165,29 @@
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal('bankModal')">Отмена</button>
       <button class="btn btn-confirm" onclick="addBankLoan()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА: РЕДАКТИРОВАТЬ БАНКОВСКИЙ КРЕДИТ -->
+<div class="modal" id="editBankModal">
+  <div class="modal-box">
+    <div class="modal-title">Редактировать кредит</div>
+    <div class="input-group">
+      <label>Название:</label>
+      <input type="text" id="editBankName" class="input-field">
+    </div>
+    <div class="input-group">
+      <label>Общая сумма кредита (тг):</label>
+      <input type="number" id="editBankTotal" class="input-field">
+    </div>
+    <div class="input-group">
+      <label>Ежемесячный платеж (тг):</label>
+      <input type="number" id="editBankMonthly" class="input-field">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal('editBankModal')">Отмена</button>
+      <button class="btn btn-confirm" onclick="submitBankEdit()">Сохранить</button>
     </div>
   </div>
 </div>
@@ -228,6 +227,25 @@
   </div>
 </div>
 
+<!-- МОДАЛКА: РЕДАКТИРОВАТЬ ДОЛГ ДРУГУ -->
+<div class="modal" id="editFriendModal">
+  <div class="modal-box">
+    <div class="modal-title">Редактировать долг</div>
+    <div class="input-group">
+      <label>Имя друга:</label>
+      <input type="text" id="editFriendName" class="input-field">
+    </div>
+    <div class="input-group">
+      <label>Сумма долга (тг):</label>
+      <input type="number" id="editFriendTotal" class="input-field">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal('editFriendModal')">Отмена</button>
+      <button class="btn btn-confirm" onclick="submitFriendEdit()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <!-- МОДАЛКА: ВНЕСТИ ПЛАТЕЖ ДРУГУ -->
 <div class="modal" id="payFriendModal">
   <div class="modal-box">
@@ -258,18 +276,12 @@
   const db = firebase.database();
   const DB_DEBTS = db.ref('man_debts');
 
-  // Глобальные данные
-  let debtsData = {
-    bank: [],
-    friends: []
-  };
-
+  let debtsData = { bank: [], friends: [] };
   let activeBankIndex = -1;
   let activeFriendIndex = -1;
+  let editingBankIndex = -1;
+  let editingFriendIndex = -1;
 
-  /* ==========================================
-     СЛУШАЕМ FIREBASE
-     ========================================== */
   DB_DEBTS.on('value', (snap) => {
     if(snap.exists()) {
       debtsData = snap.val();
@@ -281,9 +293,6 @@
     renderAll();
   });
 
-  /* ==========================================
-     НАВИГАЦИЯ
-     ========================================== */
   function switchTab(tabId, btn) {
     document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -294,18 +303,16 @@
   function openModal(id) { document.getElementById(id).classList.add('active'); }
   function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-
   function getMonthKey() {
     const d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1);
   }
-  // сколько внесено в ЭТОМ месяце (если месяц сменился — 0)
   function getMonthPaid(loan) {
     return loan.monthKey === getMonthKey() ? (loan.monthPaid || 0) : 0;
   }
 
   /* ==========================================
-     ЛОГИКА БАНКОВСКИХ КРЕДИТОВ
+     БАНКОВСКИЕ КРЕДИТЫ
      ========================================== */
   function addBankLoan() {
     const name = document.getElementById('newBankName').value.trim();
@@ -314,13 +321,7 @@
 
     if(!name || isNaN(total) || isNaN(monthly)) return alert("Заполни все поля!");
 
-    const newLoan = {
-      id: Date.now(),
-      name: name,
-      total: total,
-      paid: 0,
-      monthly: monthly
-    };
+    const newLoan = { id: Date.now(), name, total, paid: 0, monthly };
 
     debtsData.bank.push(newLoan);
     DB_DEBTS.update({ bank: debtsData.bank }).then(() => {
@@ -347,7 +348,7 @@
     let loan = debtsData.bank[activeBankIndex];
     let newPaid = loan.paid + amount;
     if(newPaid > loan.total) newPaid = loan.total;
-    const realAmount = newPaid - loan.paid; // сколько реально списалось
+    const realAmount = newPaid - loan.paid;
 
     loan.monthPaid = getMonthPaid(loan) + realAmount;
     loan.monthKey = getMonthKey();
@@ -359,6 +360,36 @@
     });
   }
 
+  function openBankEditModal(index) {
+    editingBankIndex = index;
+    const loan = debtsData.bank[index];
+    document.getElementById('editBankName').value = loan.name;
+    document.getElementById('editBankTotal').value = loan.total;
+    document.getElementById('editBankMonthly').value = loan.monthly;
+    openModal('editBankModal');
+  }
+
+  function submitBankEdit() {
+    const name = document.getElementById('editBankName').value.trim();
+    const total = parseFloat(document.getElementById('editBankTotal').value);
+    const monthly = parseFloat(document.getElementById('editBankMonthly').value);
+
+    if(!name || isNaN(total) || isNaN(monthly)) return alert("Заполни все поля!");
+
+    const loan = debtsData.bank[editingBankIndex];
+    if(total < loan.paid) {
+      return alert(`Сумма не может быть меньше уже выплаченного (${loan.paid.toLocaleString()} тг).`);
+    }
+
+    loan.name = name;
+    loan.total = total;
+    loan.monthly = monthly;
+
+    DB_DEBTS.update({ bank: debtsData.bank }).then(() => {
+      closeModal('editBankModal');
+    });
+  }
+
   function deleteBankLoan(index) {
     if(confirm("Удалить этот кредит из базы?")) {
       debtsData.bank.splice(index, 1);
@@ -367,12 +398,11 @@
   }
 
   /* ==========================================
-     ЛОГИКА ДОЛГОВ ДРУЗЬЯМ
+     ДОЛГИ ДРУЗЬЯМ
      ========================================== */
   function addFriendLoan() {
     const name = document.getElementById('newFriendName').value.trim();
     const total = parseFloat(document.getElementById('newFriendTotal').value);
-
     if(!name || isNaN(total)) return alert("Заполни все поля!");
 
     const newFriend = {
@@ -406,7 +436,6 @@
 
     let friend = debtsData.friends[activeFriendIndex];
     let newPaid = friend.paid + amount;
-
     if(newPaid > friend.total) newPaid = friend.total;
 
     debtsData.friends[activeFriendIndex].paid = newPaid;
@@ -414,6 +443,33 @@
     DB_DEBTS.update({ friends: debtsData.friends }).then(() => {
       closeModal('payFriendModal');
       if(newPaid === friend.total) alert(`🔥 Ты полностью закрыл долг перед ${friend.name}!`);
+    });
+  }
+
+  function openFriendEditModal(index) {
+    editingFriendIndex = index;
+    const friend = debtsData.friends[index];
+    document.getElementById('editFriendName').value = friend.name;
+    document.getElementById('editFriendTotal').value = friend.total;
+    openModal('editFriendModal');
+  }
+
+  function submitFriendEdit() {
+    const name = document.getElementById('editFriendName').value.trim();
+    const total = parseFloat(document.getElementById('editFriendTotal').value);
+
+    if(!name || isNaN(total)) return alert("Заполни все поля!");
+
+    const friend = debtsData.friends[editingFriendIndex];
+    if(total < friend.paid) {
+      return alert(`Сумма не может быть меньше уже возвращённого (${friend.paid.toLocaleString()} тг).`);
+    }
+
+    friend.name = name;
+    friend.total = total;
+
+    DB_DEBTS.update({ friends: debtsData.friends }).then(() => {
+      closeModal('editFriendModal');
     });
   }
 
@@ -425,14 +481,13 @@
   }
 
   /* ==========================================
-     РЕНДЕР UI
+     РЕНДЕР
      ========================================== */
   function renderAll() {
     let totalAllDebt = 0;
     const bankContainer = document.getElementById('bankListContainer');
     const friendContainer = document.getElementById('friendListContainer');
 
-    // 1. Рендер Банков
     bankContainer.innerHTML = '';
     if(debtsData.bank.length === 0) {
       bankContainer.innerHTML = '<p style="color:#666; text-align:center;">Нет банковских кредитов.</p>';
@@ -473,13 +528,13 @@
 
           <div class="debt-actions">
             <button class="btn btn-pay" onclick="openBankPayModal(${i})">Внести платеж</button>
-            <button class="btn btn-delete" onclick="deleteBankLoan(${i})">✖</button>
+            <button class="btn btn-edit" onclick="openBankEditModal(${i})" title="Редактировать">✎</button>
+            <button class="btn btn-delete" onclick="deleteBankLoan(${i})" title="Удалить">✖</button>
           </div>
         </div>
       `;
     });
 
-    // 2. Рендер Друзей
     friendContainer.innerHTML = '';
     if(debtsData.friends.length === 0) {
       friendContainer.innerHTML = '<p style="color:#666; text-align:center;">Нет долгов друзьям.</p>';
@@ -509,16 +564,15 @@
 
           <div class="debt-actions">
             <button class="btn btn-pay" onclick="openFriendPayModal(${i})">Вернуть часть</button>
-            <button class="btn btn-delete" onclick="deleteFriendLoan(${i})">✖</button>
+            <button class="btn btn-edit" onclick="openFriendEditModal(${i})" title="Редактировать">✎</button>
+            <button class="btn btn-delete" onclick="deleteFriendLoan(${i})" title="Удалить">✖</button>
           </div>
         </div>
       `;
     });
 
-    // 3. Общая сумма
     document.getElementById('totalDebtDisplay').innerText = totalAllDebt.toLocaleString() + ' тг';
   }
-
 </script>
 </body>
 </html>
